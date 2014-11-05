@@ -14,7 +14,7 @@ module PipelineRegister
 
     input [0 : 0]   inRegWrEn;
     input [3 : 0]   inWrtIndex;
-    
+
     input [1 : 0]   inMulSel;
     input [31 : 0]  inAluOut;
     input [31 : 0]  inData2Out;
@@ -34,12 +34,13 @@ module PipelineRegister
     output reg [3 : 0]  outInstType;
     output reg [0 : 0]  outIsLoad;
     output reg [0 : 0]  outIsStore;
-
-    reg [0 : 0]  outBrTaken;
-
     output [0 : 0]  isStall;
 
-    assign isStall =  (
+    reg [0 : 0]  prevStall;
+    reg [0 : 0]  outBrTaken;
+
+
+    assign isStall =  (!prevStall) && (
         outInstType == OP1_LW |
         (outInstType == OP1_BR && outBrTaken) |
         outInstType == OP1_JAL
@@ -57,6 +58,7 @@ module PipelineRegister
             outBrTaken  <= RESET_VALUE;
             outIsLoad   <= RESET_VALUE;
             outIsStore  <= RESET_VALUE;
+            prevStall   <= RESET_VALUE;
         end
         else begin
             outWrtIndex <= inWrtIndex;
@@ -69,6 +71,7 @@ module PipelineRegister
             outBrTaken  <= inBrTaken;
             outIsLoad   <= (isStall) ? 1'b0 : inIsLoad;
             outIsStore  <= (isStall) ? 1'b0 : inIsStore;
+            prevStall   <= isStall;
         end
     end
 

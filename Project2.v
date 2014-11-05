@@ -36,9 +36,9 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	parameter ADDR_LEDR 						 = 32'hF0000004;
 	parameter ADDR_LEDG 						 = 32'hF0000008;
 
-	/*parameter IMEM_INIT_FILE				 = "Test2.mif";*/
-	/*parameter IMEM_INIT_FILE				 = "Sort2_counter.mif";*/
-	parameter IMEM_INIT_FILE				 = "Sorter2_asm.mif";
+	parameter IMEM_INIT_FILE				 = "Test2.mif";
+//	parameter IMEM_INIT_FILE				 = "Sort2_counter.mif";
+//	parameter IMEM_INIT_FILE				 = "Sorter2_asm.mif";
 
 	parameter IMEM_ADDR_BIT_WIDTH 		 = 11;
 	parameter IMEM_DATA_BIT_WIDTH 		 = INST_BIT_WIDTH;
@@ -65,9 +65,9 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	wire clk, lock;
 	/*Pll pll(.inclk0(CLOCK_50), .c0(clk), .locked(lock));*/
 	PLL	PLL_inst (.inclk0 (CLOCK_50),.c0 (clk),.locked (lock));
-	/*ClkDivider clkdi(CLOCK_50, clk);*/
-
-	wire reset = SW[0]; //~lock;
+	wire reset = ~lock;
+//	ClkDivider clkdi(CLOCK_50, clk);
+//	wire reset = SW[0]; //~lock;
 
 	wire [DMEM_DATA_BIT_WIDTH - 1: 0] aluIn2;
 	wire immSel;

@@ -1,8 +1,8 @@
 module PipelineRegister
 (
     clk, reset,
-    inRegWrEn, inMulSel, inAluOut, inData2Out, inPC, inInstType, inBrTaken, inIsLoad, inIsStore,
-    outRegWrEn, outMulSel, outAluOut, outData2Out, outPC, outInstType, outIsLoad, outIsStore,
+    inWrtIndex, inRegWrEn, inMulSel, inAluOut, inData2Out, inPC, inInstType, inBrTaken, inIsLoad, inIsStore,
+    outWrtIndex, outRegWrEn, outMulSel, outAluOut, outData2Out, outPC, outInstType, outIsLoad, outIsStore,
     isStall
 );
     parameter RESET_VALUE = 0;
@@ -13,6 +13,8 @@ module PipelineRegister
     input clk, reset;
 
     input [0 : 0]   inRegWrEn;
+    input [3 : 0]   inWrtIndex;
+    
     input [1 : 0]   inMulSel;
     input [31 : 0]  inAluOut;
     input [31 : 0]  inData2Out;
@@ -23,6 +25,7 @@ module PipelineRegister
     input [0 : 0]   inIsStore;
 
 
+    output reg [3 : 0]  outWrtIndex;
     output reg [0 : 0]  outRegWrEn;
     output reg [1 : 0]  outMulSel;
     output reg [31 : 0] outAluOut;
@@ -36,12 +39,15 @@ module PipelineRegister
 
     output [0 : 0]  isStall;
 
-    assign isStall =  (outInstType == OP1_LW
-                    || (outInstType == OP1_BR && outBrTaken)
-                    || outInstType == OP1_JAL);
+    assign isStall =  (
+        outInstType == OP1_LW |
+        (outInstType == OP1_BR && outBrTaken) |
+        outInstType == OP1_JAL
+    );
 
     always @(posedge clk) begin
         if (reset == 1'b1) begin
+            outWrtIndex <= RESET_VALUE;
             outRegWrEn  <= RESET_VALUE;
             outMulSel   <= RESET_VALUE;
             outAluOut   <= RESET_VALUE;
@@ -53,6 +59,7 @@ module PipelineRegister
             outIsStore  <= RESET_VALUE;
         end
         else begin
+            outWrtIndex <= inWrtIndex;
             outRegWrEn  <= inRegWrEn;
             outMulSel   <= inMulSel;
             outAluOut   <= inAluOut;

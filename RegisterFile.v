@@ -22,8 +22,12 @@ module RegisterFile (
 			data[wrtIndex] <= dataIn;
 
     wire shouldForwardData1, shouldForwardData2;
+//    assign shouldForwardData1 = wrtEn & wrtIndex == rdIndex1;
+//    assign shouldForwardData2 = wrtEn & wrtIndex == rdIndex2;
     assign shouldForwardData1 = wrtEn & fstOpcode != OP1_LW & wrtIndex == rdIndex1;
     assign shouldForwardData2 = wrtEn & fstOpcode != OP1_LW & wrtIndex == rdIndex2;
+//    assign shouldForwardData1 = 1'b0;
+//    assign shouldForwardData2 = 1'b0;
 			
 	assign dataOut1 = shouldForwardData1 ? dataIn : data[rdIndex1];
 	assign dataOut2 = shouldForwardData2 ? dataIn : data[rdIndex2];

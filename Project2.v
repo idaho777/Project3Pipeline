@@ -1,5 +1,5 @@
 module ClkDivider(input clkIn, output clkOut);
-	parameter divider = 5000000;
+	parameter divider = 25000000;
 	parameter len = 31;
 	reg[len: 0] counter = 0;
 	reg clkReg = 0;
@@ -98,6 +98,7 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	wire[31 : 0] pipeDataOut2;
 	wire[31 : 0] pipePcLogicOut;
 	wire[3 : 0]  pipeFstOpcode;
+    wire[3: 0]   pipeWrtIndex;
 	wire[0 : 0]  pipeIsLoad;
 	wire[0 : 0]  pipeIsStore;
 	wire[0 : 0]  pipeIsStall;
@@ -133,7 +134,7 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	RegisterFile #(.OP1_LW(OP1_LW)) regFile (
         .clk(clk), .wrtEn(pipeRegFileEn),
         .fstOpcode(pipeFstOpcode),
-        .wrtIndex(wrtIndex), .rdIndex1(rdIndex1), .rdIndex2(rdIndex2),
+        .wrtIndex(pipeWrtIndex), .rdIndex1(rdIndex1), .rdIndex2(rdIndex2),
         .dataIn(dataIn),
         .dataOut1(dataOut1), .dataOut2(dataOut2)
     );
@@ -144,20 +145,20 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
         .dataOut(aluOut), .cmpOut(cmpOut_top)
     );
 
-	PipelineRegister #(.OP1_LW(OP1_LW), .OP1_BR(OP1_BCOND), .OP1_JAL(OP1_JAL)) pipelineRegister (
-		.clk(clk), .reset(reset),
-		.inRegWrEn(regFileEn), .inMulSel(memOutSel), .inAluOut(aluOut), .inData2Out(dataOut2),
-		.inPC(pcLogicOut), .inInstType(fstOpcode), .inBrTaken(cmpOut_top), .inIsLoad(isLoad), .inIsStore(isStore),
-		.outRegWrEn(pipeRegFileEn), .outMulSel(pipeMemOutSel), .outAluOut(pipeAluOut), .outData2Out(pipeDataOut2),
-		.outPC(pipePcLogicOut), .outInstType(pipeFstOpcode), .outIsLoad(pipeIsLoad), .outIsStore(pipeIsStore),
-		.isStall(pipeIsStall)
-	);
-
    // Sign Extension
 	SignExtension #(.IN_BIT_WIDTH(16), .OUT_BIT_WIDTH(32)) se (imm, seImm);
 
 	// ALU Mux
 	Mux2to1 #(.DATA_BIT_WIDTH(DBITS)) muxAluIn (immSel, pipeDataOut2, seImm, aluIn2);
+    
+	PipelineRegister #(.OP1_LW(OP1_LW), .OP1_BR(OP1_BCOND), .OP1_JAL(OP1_JAL)) pipelineRegister (
+		.clk(clk), .reset(reset),
+		.inWrtIndex(wrtIndex), .inRegWrEn(regFileEn), .inMulSel(memOutSel), .inAluOut(aluOut), .inData2Out(dataOut2),
+		.inPC(pcLogicOut), .inInstType(fstOpcode), .inBrTaken(cmpOut_top), .inIsLoad(isLoad), .inIsStore(isStore),
+		.outWrtIndex(pipeWrtIndex), .outRegWrEn(pipeRegFileEn), .outMulSel(pipeMemOutSel), .outAluOut(pipeAluOut), .outData2Out(pipeDataOut2),
+		.outPC(pipePcLogicOut), .outInstType(pipeFstOpcode), .outIsLoad(pipeIsLoad), .outIsStore(pipeIsStore),
+		.isStall(pipeIsStall)
+	);
 
 	// Data Memory and I/O
     MemoryUnit #(

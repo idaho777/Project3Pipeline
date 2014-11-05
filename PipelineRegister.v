@@ -36,9 +36,9 @@ module PipelineRegister
 
     output [0 : 0]  isStall;
 
-    assign isStall =  (inInstType == OP1_LW
-                    || (inInstType == OP1_BR && outBrTaken)
-                    || inInstType == OP1_JAL);
+    assign isStall =  (outInstType == OP1_LW
+                    || (outInstType == OP1_BR && outBrTaken)
+                    || outInstType == OP1_JAL);
 
     always @(posedge clk) begin
         if (reset == 1'b1) begin

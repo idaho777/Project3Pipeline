@@ -64,10 +64,14 @@ module Project3(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 
 	//PLL, clock generation, and reset generation
 	wire clk, lock;
-	PLL	PLL_inst (.inclk0 (CLOCK_50),.c0 (clk),.locked (lock));
-	wire reset = ~lock;
+//	PLL	PLL_inst (.inclk0 (CLOCK_50),.c0 (clk),.locked (lock));
+//	wire reset = ~lock;
+
 //	ClkDivider clkdi(CLOCK_50, clk);
 //	wire reset = SW[0];
+
+    assign clk = CLOCK_50;
+	wire reset = SW[0];
 
 	wire [DMEM_DATA_BIT_WIDTH - 1: 0] aluIn2;
 	wire immSel;

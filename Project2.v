@@ -109,7 +109,10 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	PcLogic pcLogic (pcOut, pcLogicOut);
 	//Mux2to1 #(.DATA_BIT_WIDTH(DBITS)) muxPcOut (pcSel, pcLogicOut, branchPc, pcIn);
 	Mux4to1 muxPcOut (pcSel, pcLogicOut, branchPc, aluOut, 32'd0, pcIn);
-    Mux2to1 #(.DATA_BIT_WIDTH(DBITS)) muxPcStall (pipeIsStall, pcOut, pcIn, pcInTrue);
+    Mux2to1 #(.DATA_BIT_WIDTH(DBITS)) muxPcStall (pipeIsStall, pcIn, pcOut, pcInTrue);
+
+	// Branch Address Calculator
+	BranchAddrCalculator bac (.nextPc(pcLogicOut), .pcRel(seImm), .branchAddr(branchPc));
 
 	// Instruction Memory
 	InstMemory #(IMEM_INIT_FILE, IMEM_ADDR_BIT_WIDTH, IMEM_DATA_BIT_WIDTH) instMem (
@@ -173,7 +176,5 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
         .LEDG(LEDG), .LEDR(LEDR), .HEX0(HEX0), .HEX1(HEX1), .HEX2(HEX2), .HEX3(HEX3)
     );
 
-	// Branch Address Calculator
-	BranchAddrCalculator bac (.nextPc(pipePcLogicOut), .pcRel(seImm), .branchAddr(branchPc));
 
 endmodule

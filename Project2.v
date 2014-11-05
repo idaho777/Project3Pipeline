@@ -3,12 +3,12 @@ module ClkDivider(input clkIn, output clkOut);
 	parameter len = 31;
 	reg[len: 0] counter = 0;
 	reg clkReg = 0;
-	
+
 	assign clkOut = clkReg;
-	
+
 	always @(posedge clkIn) begin
 		counter <= counter + 1;
-		
+
 		if (counter == divider) begin
 			clkReg <= ~clkReg;
 			counter <= 0;
@@ -23,8 +23,8 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	input  CLOCK_50;
 	output [9:0] LEDR;
 	output [7:0] LEDG;
-	output [6:0] HEX0,HEX1,HEX2,HEX3; 
-	
+	output [6:0] HEX0,HEX1,HEX2,HEX3;
+
 	parameter DBITS         				 = 32;
 	parameter INST_SIZE      				 = 32'd4;
 	parameter INST_BIT_WIDTH				 = 32;
@@ -35,18 +35,18 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	parameter ADDR_HEX  						 = 32'hF0000000;
 	parameter ADDR_LEDR 						 = 32'hF0000004;
 	parameter ADDR_LEDG 						 = 32'hF0000008;
-  
+
 	parameter IMEM_INIT_FILE				 = "Test2.mif";//"Sort2_counter.mif"; //"Sorter2.mif";
 	parameter IMEM_ADDR_BIT_WIDTH 		 = 11;
 	parameter IMEM_DATA_BIT_WIDTH 		 = INST_BIT_WIDTH;
 	parameter IMEM_PC_BITS_HI     		 = IMEM_ADDR_BIT_WIDTH + 2;
 	parameter IMEM_PC_BITS_LO     		 = 2;
-	
+
 	parameter DMEM_ADDR_BIT_WIDTH 		 = 11;
 	parameter DMEM_DATA_BIT_WIDTH 		 = 32;
 	parameter DMEM_ADDR_BITS_HI     		 = DMEM_ADDR_BIT_WIDTH + 2;
 	parameter DMEM_ADDR_BITS_LO     		 = 2;
-	
+
 	parameter OP1_ALUR 					 = 4'b0000;
 	parameter OP1_ALUI 					 = 4'b1000;
 	parameter OP1_CMPR 					 = 4'b0010;
@@ -55,17 +55,17 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	parameter OP1_SW   					 = 4'b0101;
 	parameter OP1_LW   					 = 4'b1001;
 	parameter OP1_JAL  					 = 4'b1011;
-  
+
 	// Add parameters for various secondary opcode values
-  
+
 	//PLL, clock genration, and reset generation
 	wire clk, lock;
 	//Pll pll(.inclk0(CLOCK_50), .c0(clk), .locked(lock));
 	//PLL	PLL_inst (.inclk0 (CLOCK_50),.c0 (clk),.locked (lock));
 	ClkDivider clkdi(CLOCK_50, clk);
-	
+
 	wire reset = SW[0]; //~lock;
-	
+
 	wire [DMEM_DATA_BIT_WIDTH - 1: 0] aluIn2;
 	wire immSel;
     wire [1:0] memOutSel;
@@ -76,7 +76,7 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	wire regFileEn;
 	wire dataWrtEn;
 	wire [DMEM_DATA_BIT_WIDTH - 1: 0] dataIn, dataOut1, dataOut2;
-	wire cmpOut_top;  
+	wire cmpOut_top;
 	wire [DMEM_DATA_BIT_WIDTH - 1: 0] aluOut;
 	wire [DMEM_DATA_BIT_WIDTH - 1: 0] addrMemIn;
 	wire [DMEM_DATA_BIT_WIDTH - 1: 0] dataMemIn;
@@ -84,14 +84,14 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	wire[IMEM_DATA_BIT_WIDTH - 1: 0] instWord;
 	wire[DBITS - 1: 0] branchPc;
 	wire isLoad, isStore;
-  
+
 	// PC register
 	wire pcWrtEn = 1'b1; // always right to PC
 	wire[DBITS - 1: 0] pcIn; // Implement the logic that generates pcIn; you may change pcIn to reg if necessary
 	wire[DBITS - 1: 0] pcOut;
 	wire[DBITS - 1: 0] pcLogicOut;
 	wire [1:0] pcSel; // 0: pcOut + 4, 1: branchPc
-	
+
 	Register #(.BIT_WIDTH(DBITS), .RESET_VALUE(START_PC)) pc (
         clk, reset, pcWrtEn, pcIn, pcOut
     );
@@ -99,22 +99,22 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	//Mux2to1 #(.DATA_BIT_WIDTH(DBITS)) muxPcOut (pcSel, pcLogicOut, branchPc, pcIn);
 	Mux4to1 muxPcOut (pcSel, pcLogicOut, branchPc, aluOut, 32'd0, pcIn);
 
-	
+
 	// Instruction Memory
 	InstMemory #(IMEM_INIT_FILE, IMEM_ADDR_BIT_WIDTH, IMEM_DATA_BIT_WIDTH) instMem (
         pcOut[IMEM_PC_BITS_HI - 1: IMEM_PC_BITS_LO], instWord
     );
-  
-	// Controller 
+
+	// Controller
 	Controller cont (
         .inst(instWord), .aluCmpIn(cmpOut_top),
         .fstOpcode(fstOpcode), .sndOpcode(sndOpcode), .dRegAddr(wrtIndex),
-        .s1RegAddr(rdIndex1), .s2RegAddr(rdIndex2), .imm(imm), 
+        .s1RegAddr(rdIndex1), .s2RegAddr(rdIndex2), .imm(imm),
         .regFileWrtEn(regFileEn),
         .immSel(immSel), .memOutSel(memOutSel), .pcSel(pcSel),
         .isLoad(isLoad), .isStore(isStore)
     );
-  
+
 	// RegisterFile
 	RegisterFile #(.OP1_LW(OP1_LW)) regFile (
         .clk(clk), .wrtEn(regFileEn),
@@ -122,16 +122,18 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
         .wrtIndex(wrtIndex), .rdIndex1(rdIndex1), .rdIndex2(rdIndex2), .dataIn(dataIn),
         .dataOut1(dataOut1), .dataOut2(dataOut2)
     );
- 
+
 	// ALU
 	Alu alu1 (
         .ctrl(sndOpcode), .rawDataIn1(dataOut1), .rawDataIn2(aluIn2),
         .dataOut(aluOut), .cmpOut(cmpOut_top)
-    ); 
-  
+    );
+
+
+
    // Sign Extension
 	SignExtension #(.IN_BIT_WIDTH(16), .OUT_BIT_WIDTH(32)) se (imm, seImm);
- 
+
 	// ALU Mux
 	Mux2to1 #(.DATA_BIT_WIDTH(DBITS)) muxAluIn (immSel, dataOut2, seImm, aluIn2);
 
@@ -139,21 +141,21 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	negRegister dataReg (clk, reset, 1'b1, aluOut, addrMemIn);
     MemoryUnit #(
         .DMEM_ADDR_BITS_HI(DMEM_ADDR_BITS_HI),
-        .DMEM_ADDR_BITS_LO(DMEM_ADDR_BITS_LO), 
+        .DMEM_ADDR_BITS_LO(DMEM_ADDR_BITS_LO),
         .DMEM_ADDR_BIT_WIDTH(DMEM_ADDR_BIT_WIDTH),
         .DMEM_DATA_BIT_WIDTH(DMEM_DATA_BIT_WIDTH),
         .DBITS(DBITS)
     ) memUnit(
-        .clk(clk), .reset(reset), .addrMemIn(addrMemIn), 
-        .isLoad(isLoad), .isStore(isStore), 
-        .dataOut2(dataOut2), .aluOut(aluOut), .pcLogicOut(pcLogicOut), 
+        .clk(clk), .reset(reset), .addrMemIn(addrMemIn),
+        .isLoad(isLoad), .isStore(isStore),
+        .dataOut2(dataOut2), .aluOut(aluOut), .pcLogicOut(pcLogicOut),
         .memOutSel(memOutSel),
         .KEY(KEY), .SW(SW),
-        .dataIn(dataIn), 
+        .dataIn(dataIn),
         .LEDG(LEDG), .LEDR(LEDR), .HEX0(HEX0), .HEX1(HEX1), .HEX2(HEX2), .HEX3(HEX3)
     );
-    
+
 	// Branch Address Calculator
-	BranchAddrCalculator bac (.nextPc(pcLogicOut), .pcRel(seImm), .branchAddr(branchPc));	
-	
+	BranchAddrCalculator bac (.nextPc(pcLogicOut), .pcRel(seImm), .branchAddr(branchPc));
+
 endmodule

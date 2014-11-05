@@ -2,7 +2,8 @@ module PiplelineRegister
 (
     clk, reset,
     inRegWrEn, inMulSel, inAluOut, inData2Out, inPC, inInstType, inBrTaken, inIsLoad, inIsStore,
-    outRegWrEn, outMulSel, outAluOut, outData2Out, outPC, outInstType, outBrTaken, outIsLoad, outIsStore
+    outRegWrEn, outMulSel, outAluOut, outData2Out, outPC, outInstType, outBrTaken, outIsLoad, outIsStore,
+    isStall
 );
     parameter RESET_VALUE = 0;
 
@@ -29,6 +30,11 @@ module PiplelineRegister
     output reg [0 : 0]  outIsLoad;
     output reg [0 : 0]  outIsStore;
 
+    output [0 : 0]  isStall;
+    wire   [0 : 0]  isStall;
+
+    assign isStall = (inInstType == 4'b1011 || inInstType == 4'b0101 || inInstType == 4'b0110);
+
     always @(posedge clk) begin
         if (reset == 1'b1) begin
             outRegWrEn  <= RESET_VALUE;
@@ -49,8 +55,8 @@ module PiplelineRegister
             outPC       <= inPC;
             outInstType <= inInstType;
             outBrTaken  <= inBrTaken;
-            outIsLoad   <= inIsLoad;
-            outIsStore  <= inIsStore;
+            outIsLoad   <= (isStall) ? 1'b0 : inIsLoad;
+            outIsStore  <= (isStall) ? 1'b0 : inIsStore;
         end
     end
 

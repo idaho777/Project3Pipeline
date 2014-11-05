@@ -40,10 +40,12 @@ module PipelineRegister
     reg [0 : 0]  outBrTaken;
 
 
-    assign isStall =  (!prevStall) && (
-        outInstType == OP1_LW |
-        (outInstType == OP1_BR && outBrTaken) |
-        outInstType == OP1_JAL
+//    assign isStall = 0;
+    assign isStall =
+      (!prevStall) && (
+        outInstType == OP1_LW
+        | (outInstType == OP1_BR && outBrTaken)
+        | outInstType == OP1_JAL
     );
 
     always @(posedge clk) begin

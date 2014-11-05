@@ -17,7 +17,7 @@ module ClkDivider(input clkIn, output clkOut);
 endmodule
 
 
-module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
+module Project3(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	input  [9:0] SW;
 	input  [3:0] KEY;
 	input  CLOCK_50;
@@ -40,6 +40,7 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 //	parameter IMEM_INIT_FILE				 = "Sort2_counter.mif";
 //	parameter IMEM_INIT_FILE				 = "Sorter2_asm.mif";
 
+
 	parameter IMEM_ADDR_BIT_WIDTH 		 = 11;
 	parameter IMEM_DATA_BIT_WIDTH 		 = INST_BIT_WIDTH;
 	parameter IMEM_PC_BITS_HI     		 = IMEM_ADDR_BIT_WIDTH + 2;
@@ -61,13 +62,12 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 
 	// Add parameters for various secondary opcode values
 
-	//PLL, clock genration, and reset generation
+	//PLL, clock generation, and reset generation
 	wire clk, lock;
-	/*Pll pll(.inclk0(CLOCK_50), .c0(clk), .locked(lock));*/
 	PLL	PLL_inst (.inclk0 (CLOCK_50),.c0 (clk),.locked (lock));
 	wire reset = ~lock;
 //	ClkDivider clkdi(CLOCK_50, clk);
-//	wire reset = SW[0]; //~lock;
+//	wire reset = SW[0];
 
 	wire [DMEM_DATA_BIT_WIDTH - 1: 0] aluIn2;
 	wire immSel;

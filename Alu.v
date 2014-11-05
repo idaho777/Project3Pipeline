@@ -157,7 +157,7 @@ module Alu (ctrl, rawDataIn1, rawDataIn2, dataOut, cmpOut);
 					end
 		5'b11101:begin // BNEZ
 						dataOut <= 32'd0;
-						if(data1[31] != 32'd0) 
+						if(data1 != 32'd0) 
 							cmpOut  <= 1'b1;
 						else	
 							cmpOut  <= 1'b0;

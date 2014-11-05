@@ -1,5 +1,5 @@
 module ClkDivider(input clkIn, output clkOut);
-	parameter divider = 25000000;
+	parameter divider = 2500000;
 	parameter len = 31;
 	reg[len: 0] counter = 0;
 	reg clkReg = 0;
@@ -149,7 +149,7 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	SignExtension #(.IN_BIT_WIDTH(16), .OUT_BIT_WIDTH(32)) se (imm, seImm);
 
 	// ALU Mux
-	Mux2to1 #(.DATA_BIT_WIDTH(DBITS)) muxAluIn (immSel, pipeDataOut2, seImm, aluIn2);
+	Mux2to1 #(.DATA_BIT_WIDTH(DBITS)) muxAluIn (immSel, dataOut2, seImm, aluIn2);
     
 	PipelineRegister #(.OP1_LW(OP1_LW), .OP1_BR(OP1_BCOND), .OP1_JAL(OP1_JAL)) pipelineRegister (
 		.clk(clk), .reset(reset),
@@ -159,6 +159,7 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 		.outPC(pipePcLogicOut), .outInstType(pipeFstOpcode), .outIsLoad(pipeIsLoad), .outIsStore(pipeIsStore),
 		.isStall(pipeIsStall)
 	);
+//	wire [6:0] eHEX0,eHEX1,eHEX2,eHEX3;
 
 	// Data Memory and I/O
     MemoryUnit #(
@@ -174,8 +175,14 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
         .memOutSel(pipeMemOutSel),
         .KEY(KEY), .SW(SW),
         .dataIn(dataIn),
+//        .LEDG(LEDG), .LEDR(LEDR), .HEX0(eHEX0), .HEX1(eHEX1), .HEX2(eHEX2), .HEX3(eHEX3)
         .LEDG(LEDG), .LEDR(LEDR), .HEX0(HEX0), .HEX1(HEX1), .HEX2(HEX2), .HEX3(HEX3)
     );
-
+/*
+    SevenSeg hex0Converter(pcOut[3:0], HEX0);
+	SevenSeg hex1Converter(pcOut[7:4], HEX1);
+	SevenSeg hex2Converter(pcOut[11:8], HEX2);
+	SevenSeg hex3Converter(pcOut[15:12], HEX3);
+*/
 
 endmodule

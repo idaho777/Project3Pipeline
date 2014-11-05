@@ -47,17 +47,17 @@ module MemoryUnit(
 
 	// KEYS, SWITCHES, HEXS, and LEDS are memory mapped IO
 	// SWITCH
-	Register switchReg   (clk, reset, swEn, {22'd0,SW}, switchOut);
+	Register #(.BIT_WIDTH(DBITS), .RESET_VALUE(0)) switchReg (clk, reset, swEn, {22'd0,SW}, switchOut);
 	// LEDR
-	Register ledrReg 	 (clk, reset, ledrEn, dataOut2, ledrOut); //
+	Register #(.BIT_WIDTH(DBITS), .RESET_VALUE(0)) ledrReg (clk, reset, ledrEn, dataOut2, ledrOut); //
 	assign LEDR = ledrOut[9:0];
 	// LEDG
-	Register ledgReg 	 (clk, reset, ledgEn, dataOut2, ledgOut); //
+	Register #(.BIT_WIDTH(DBITS), .RESET_VALUE(0)) ledgReg (clk, reset, ledgEn, dataOut2, ledgOut); //
 	assign LEDG = ledgOut[7:0];
 	// KEY
-	Register keyReg 	 (clk, reset, keyEn, {28'd0,KEY}, keyOut);
+	Register #(.BIT_WIDTH(DBITS), .RESET_VALUE(0)) keyReg (clk, reset, keyEn, {28'd0,KEY}, keyOut);
 	// HEXS
-	Register hexReg 	 (clk, reset, hexEn, dataOut2, hexOut); //
+	Register #(.BIT_WIDTH(DBITS), .RESET_VALUE(0)) hexReg (clk, reset, hexEn, dataOut2, hexOut); //
 	SevenSeg hex0Converter(hexOut[3:0], HEX0);
 	SevenSeg hex1Converter(hexOut[7:4], HEX1);
 	SevenSeg hex2Converter(hexOut[11:8], HEX2);

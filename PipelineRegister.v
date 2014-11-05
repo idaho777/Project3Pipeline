@@ -60,7 +60,7 @@ module PipelineRegister
         end
         else begin
             outWrtIndex <= inWrtIndex;
-            outRegWrEn  <= inRegWrEn;
+            outRegWrEn  <= (isStall) ? 1'b0 : inRegWrEn;
             outMulSel   <= inMulSel;
             outAluOut   <= inAluOut;
             outData2Out <= inData2Out;

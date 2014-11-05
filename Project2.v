@@ -74,7 +74,6 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	wire [4: 0] sndOpcode;
 	wire [15: 0] imm;
 	wire regFileEn;
-	wire dataWrtEn;
 	wire [DMEM_DATA_BIT_WIDTH - 1: 0] dataIn, dataOut1, dataOut2;
 	wire cmpOut_top;
 	wire [DMEM_DATA_BIT_WIDTH - 1: 0] aluOut;
@@ -86,20 +85,21 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	wire isLoad, isStore;
 
 	// PC register
+    wire isStall = 1'b1;
 	wire pcWrtEn = 1'b1; // always right to PC
-	wire[DBITS - 1: 0] pcIn; // Implement the logic that generates pcIn; you may change pcIn to reg if necessary
+	wire[DBITS - 1: 0] pcIn, pcInTrue; // Implement the logic that generates pcIn; you may change pcIn to reg if necessary
 	wire[DBITS - 1: 0] pcOut;
 	wire[DBITS - 1: 0] pcLogicOut;
 	wire [1:0] pcSel; // 0: pcOut + 4, 1: branchPc
 
 	Register #(.BIT_WIDTH(DBITS), .RESET_VALUE(START_PC)) pc (
-        clk, reset, pcWrtEn, pcIn, pcOut
+        clk, reset, pcWrtEn, pcInTrue, pcOut
     );
 	PcLogic pcLogic (pcOut, pcLogicOut);
 	//Mux2to1 #(.DATA_BIT_WIDTH(DBITS)) muxPcOut (pcSel, pcLogicOut, branchPc, pcIn);
 	Mux4to1 muxPcOut (pcSel, pcLogicOut, branchPc, aluOut, 32'd0, pcIn);
-
-
+    Mux2to1 #(.DATA_BIT_WIDTH(DBITS)) muxPcStall (isStall, pcOut, pcIn, pcInTrue);
+	
 	// Instruction Memory
 	InstMemory #(IMEM_INIT_FILE, IMEM_ADDR_BIT_WIDTH, IMEM_DATA_BIT_WIDTH) instMem (
         pcOut[IMEM_PC_BITS_HI - 1: IMEM_PC_BITS_LO], instWord
@@ -118,8 +118,9 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	// RegisterFile
 	RegisterFile #(.OP1_LW(OP1_LW)) regFile (
         .clk(clk), .wrtEn(regFileEn),
-        //.fstOpcode(fstOpcode),
-        .wrtIndex(wrtIndex), .rdIndex1(rdIndex1), .rdIndex2(rdIndex2), .dataIn(dataIn),
+        .fstOpcode(fstOpcode),
+        .wrtIndex(wrtIndex), .rdIndex1(rdIndex1), .rdIndex2(rdIndex2),
+        .dataIn(dataIn),
         .dataOut1(dataOut1), .dataOut2(dataOut2)
     );
 

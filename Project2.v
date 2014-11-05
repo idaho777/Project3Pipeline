@@ -85,12 +85,23 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	wire isLoad, isStore;
 
 	// PC register
-    wire isStall = 1'b1;
 	wire pcWrtEn = 1'b1; // always right to PC
 	wire[DBITS - 1: 0] pcIn, pcInTrue; // Implement the logic that generates pcIn; you may change pcIn to reg if necessary
 	wire[DBITS - 1: 0] pcOut;
 	wire[DBITS - 1: 0] pcLogicOut;
 	wire [1:0] pcSel; // 0: pcOut + 4, 1: branchPc
+
+	// Pipeline Register
+	wire[0 : 0]  pipeRegFileEn;
+	wire[1 : 0]  pipeMemOutSel;
+	wire[31 : 0] pipeAluOut;
+	wire[31 : 0] pipeDataOut2;
+	wire[31 : 0] pipePcLogicOut;
+	wire[3 : 0]  pipeFstOpcode;
+	wire[0 : 0]  pipeIsLoad;
+	wire[0 : 0]  pipeIsStore;
+	wire[0 : 0]  pipeIsStall;
+
 
 	Register #(.BIT_WIDTH(DBITS), .RESET_VALUE(START_PC)) pc (
         clk, reset, pcWrtEn, pcInTrue, pcOut
@@ -98,8 +109,8 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	PcLogic pcLogic (pcOut, pcLogicOut);
 	//Mux2to1 #(.DATA_BIT_WIDTH(DBITS)) muxPcOut (pcSel, pcLogicOut, branchPc, pcIn);
 	Mux4to1 muxPcOut (pcSel, pcLogicOut, branchPc, aluOut, 32'd0, pcIn);
-    Mux2to1 #(.DATA_BIT_WIDTH(DBITS)) muxPcStall (isStall, pcOut, pcIn, pcInTrue);
-	
+    Mux2to1 #(.DATA_BIT_WIDTH(DBITS)) muxPcStall (pipeIsStall, pcOut, pcIn, pcInTrue);
+
 	// Instruction Memory
 	InstMemory #(IMEM_INIT_FILE, IMEM_ADDR_BIT_WIDTH, IMEM_DATA_BIT_WIDTH) instMem (
         pcOut[IMEM_PC_BITS_HI - 1: IMEM_PC_BITS_LO], instWord
@@ -117,8 +128,8 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 
 	// RegisterFile
 	RegisterFile #(.OP1_LW(OP1_LW)) regFile (
-        .clk(clk), .wrtEn(regFileEn),
-        .fstOpcode(fstOpcode),
+        .clk(clk), .wrtEn(pipeRegFileEn),
+        .fstOpcode(pipeFstOpcode),
         .wrtIndex(wrtIndex), .rdIndex1(rdIndex1), .rdIndex2(rdIndex2),
         .dataIn(dataIn),
         .dataOut1(dataOut1), .dataOut2(dataOut2)
@@ -130,16 +141,22 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
         .dataOut(aluOut), .cmpOut(cmpOut_top)
     );
 
-
+	PipelineRegister #(.OP1_LW(OP1_LW), .OP1_BR(OP1_BCOND), .OP1_JAL(OP1_JAL)) pipelineRegister (
+		.clk(clk), .reset(reset),
+		.inRegWrEn(regFileEn), .inMulSel(memOutSel), .inAluOut(aluOut), .inData2Out(dataOut2),
+		.inPC(pcLogicOut), .inInstType(fstOpcode), .inBrTaken(cmpOut_top), .inIsLoad(isLoad), .inIsStore(isStore),
+		.outRegWrEn(pipeRegFileEn), .outMulSel(pipeMemOutSel), .outAluOut(pipeAluOut), .outData2Out(pipeDataOut2),
+		.outPC(pipePcLogicOut), .outInstType(pipeFstOpcode), .outIsLoad(pipeIsLoad), .outIsStore(pipeIsStore),
+		.isStall(pipeIsStall)
+	);
 
    // Sign Extension
 	SignExtension #(.IN_BIT_WIDTH(16), .OUT_BIT_WIDTH(32)) se (imm, seImm);
 
 	// ALU Mux
-	Mux2to1 #(.DATA_BIT_WIDTH(DBITS)) muxAluIn (immSel, dataOut2, seImm, aluIn2);
+	Mux2to1 #(.DATA_BIT_WIDTH(DBITS)) muxAluIn (immSel, pipeDataOut2, seImm, aluIn2);
 
 	// Data Memory and I/O
-	negRegister dataReg (clk, reset, 1'b1, aluOut, addrMemIn);
     MemoryUnit #(
         .DMEM_ADDR_BITS_HI(DMEM_ADDR_BITS_HI),
         .DMEM_ADDR_BITS_LO(DMEM_ADDR_BITS_LO),
@@ -147,16 +164,16 @@ module Project2(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
         .DMEM_DATA_BIT_WIDTH(DMEM_DATA_BIT_WIDTH),
         .DBITS(DBITS)
     ) memUnit(
-        .clk(clk), .reset(reset), .addrMemIn(addrMemIn),
-        .isLoad(isLoad), .isStore(isStore),
-        .dataOut2(dataOut2), .aluOut(aluOut), .pcLogicOut(pcLogicOut),
-        .memOutSel(memOutSel),
+        .clk(clk), .reset(reset), .addrMemIn(pipeAluOut),
+        .isLoad(pipeIsLoad), .isStore(pipeIsStore),
+        .dataOut2(pipeDataOut2), .aluOut(pipeAluOut), .pcLogicOut(pipePcLogicOut),
+        .memOutSel(pipeMemOutSel),
         .KEY(KEY), .SW(SW),
         .dataIn(dataIn),
         .LEDG(LEDG), .LEDR(LEDR), .HEX0(HEX0), .HEX1(HEX1), .HEX2(HEX2), .HEX3(HEX3)
     );
 
 	// Branch Address Calculator
-	BranchAddrCalculator bac (.nextPc(pcLogicOut), .pcRel(seImm), .branchAddr(branchPc));
+	BranchAddrCalculator bac (.nextPc(pipePcLogicOut), .pcRel(seImm), .branchAddr(branchPc));
 
 endmodule

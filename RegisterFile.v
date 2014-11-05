@@ -25,11 +25,7 @@ module RegisterFile (
     assign shouldForwardData1 = wrtEn & fstOpcode != OP1_LW & wrtIndex == rdIndex1;
     assign shouldForwardData2 = wrtEn & fstOpcode != OP1_LW & wrtIndex == rdIndex2;
 			
-/*
 	assign dataOut1 = shouldForwardData1 ? dataIn : data[rdIndex1];
 	assign dataOut2 = shouldForwardData2 ? dataIn : data[rdIndex2];
-*/
-    assign dataOut1 = data[rdIndex1];
-	assign dataOut2 = data[rdIndex2];
 	
 endmodule

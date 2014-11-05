@@ -1,11 +1,14 @@
-module PiplelineRegister
+module PipelineRegister
 (
     clk, reset,
     inRegWrEn, inMulSel, inAluOut, inData2Out, inPC, inInstType, inBrTaken, inIsLoad, inIsStore,
-    outRegWrEn, outMulSel, outAluOut, outData2Out, outPC, outInstType, outBrTaken, outIsLoad, outIsStore,
+    outRegWrEn, outMulSel, outAluOut, outData2Out, outPC, outInstType, outIsLoad, outIsStore,
     isStall
 );
     parameter RESET_VALUE = 0;
+    parameter OP1_LW;
+    parameter OP1_BR;
+    parameter OP1_JAL;
 
     input clk, reset;
 
@@ -26,14 +29,16 @@ module PiplelineRegister
     output reg [31 : 0] outData2Out;
     output reg [31 : 0] outPC;
     output reg [3 : 0]  outInstType;
-    output reg [0 : 0]  outBrTaken;
     output reg [0 : 0]  outIsLoad;
     output reg [0 : 0]  outIsStore;
 
-    output [0 : 0]  isStall;
-    wire   [0 : 0]  isStall;
+    reg [0 : 0]  outBrTaken;
 
-    assign isStall = (inInstType == 4'b1011 || inInstType == 4'b0101 || inInstType == 4'b0110);
+    output [0 : 0]  isStall;
+
+    assign isStall =  (inInstType == OP1_LW
+                    || (inInstType == OP1_BR && outBrTaken)
+                    || inInstType == OP1_JAL);
 
     always @(posedge clk) begin
         if (reset == 1'b1) begin

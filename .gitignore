@@ -1,0 +1,15 @@
+*~
+*.swp
+*.bak
+*.rpt
+*.summary
+*.done
+*.qws
+*.sof
+*.pof
+
+db/
+incremental_db/
+src/asm/SCAssembler
+work/_temp/
+work/@*

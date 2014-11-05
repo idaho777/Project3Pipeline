@@ -9,7 +9,6 @@ module PiplelineRegister
     input clk, reset;
 
     input [0 : 0]   inRegWrEn;
-    input [0 : 0]   inMemWrEn;
     input [1 : 0]   inMulSel;
     input [31 : 0]  inAluOut;
     input [31 : 0]  inData2Out;
@@ -21,7 +20,6 @@ module PiplelineRegister
 
 
     output reg [0 : 0]  outRegWrEn;
-    output reg [0 : 0]  outMemWrEn;
     output reg [1 : 0]  outMulSel;
     output reg [31 : 0] outAluOut;
     output reg [31 : 0] outData2Out;
@@ -34,7 +32,6 @@ module PiplelineRegister
     always @(posedge clk) begin
         if (reset == 1'b1) begin
             outRegWrEn  <= RESET_VALUE;
-            outMemWrEn  <= RESET_VALUE;
             outMulSel   <= RESET_VALUE;
             outAluOut   <= RESET_VALUE;
             outData2Out <= RESET_VALUE;
@@ -44,9 +41,8 @@ module PiplelineRegister
             outIsLoad   <= RESET_VALUE;
             outIsStore  <= RESET_VALUE;
         end
-        else if (wrtEn == 1'b1) begin
+        else begin
             outRegWrEn  <= inRegWrEn;
-            outMemWrEn  <= inMemWrEn;
             outMulSel   <= inMulSel;
             outAluOut   <= inAluOut;
             outData2Out <= inData2Out;

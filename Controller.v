@@ -1,4 +1,8 @@
-module Controller (inst, aluCmpIn, sndOpcode, dRegAddr, s1RegAddr, s2RegAddr, imm, regFileWrtEn, immSel, memOutSel, pcSel, isLoad, isStore);
+module Controller (
+    inst, aluCmpIn,
+    fstOpcode, sndOpcode, dRegAddr, s1RegAddr, s2RegAddr,
+    imm, regFileWrtEn, immSel, memOutSel, pcSel, isLoad, isStore
+);
 	
 	parameter INST_BIT_WIDTH = 32;
 	
@@ -7,6 +11,7 @@ module Controller (inst, aluCmpIn, sndOpcode, dRegAddr, s1RegAddr, s2RegAddr, im
 	input aluCmpIn;
 	
 	// output opcodes
+	output reg [3: 0] fstOpcode;
 	output reg [4: 0] sndOpcode;
 	
 	// register addresses
@@ -28,6 +33,7 @@ module Controller (inst, aluCmpIn, sndOpcode, dRegAddr, s1RegAddr, s2RegAddr, im
 	begin
 		case(inst[31:28])
 		4'b0000:begin // arithmetic
+                                fstOpcode       <= 4'b0000;
 								sndOpcode 		<= {1'b0, inst[27:24]};
 								dRegAddr  		<= inst[23:20];
 								s1RegAddr 		<= inst[19:16];
@@ -42,6 +48,7 @@ module Controller (inst, aluCmpIn, sndOpcode, dRegAddr, s1RegAddr, s2RegAddr, im
 								isStore 			<= 1'b0;
 							end
 		4'b1000:begin // immediate arithmetic
+                                fstOpcode       <= 4'b1000;
 								sndOpcode 		<= {1'b0, inst[27:24]};
 								dRegAddr  		<= inst[23:20];
 								s1RegAddr 		<= inst[19:16];
@@ -56,6 +63,7 @@ module Controller (inst, aluCmpIn, sndOpcode, dRegAddr, s1RegAddr, s2RegAddr, im
 								isStore 			<= 1'b0;
 							end
 		4'b0010:begin // comparison
+                                fstOpcode       <= 4'b0010;
 								sndOpcode 		<= {1'b1, inst[27:24]};
 								dRegAddr  		<= inst[23:20];
 								s1RegAddr 		<= inst[19:16];
@@ -71,6 +79,7 @@ module Controller (inst, aluCmpIn, sndOpcode, dRegAddr, s1RegAddr, s2RegAddr, im
 							end
 							
 		4'b1010:begin // immediate comparison
+                                fstOpcode       <= 4'b1010;
 								sndOpcode 		<= {1'b1, inst[27:24]};
 								dRegAddr  		<= inst[23:20];
 								s1RegAddr 		<= inst[19:16];
@@ -85,6 +94,7 @@ module Controller (inst, aluCmpIn, sndOpcode, dRegAddr, s1RegAddr, s2RegAddr, im
 								isStore 			<= 1'b0;
 							end
 		4'b0110:begin // compare and branch
+                                fstOpcode       <= 4'b0110;
 								sndOpcode 		<= {1'b1, inst[27:24]};
 								dRegAddr  		<= 4'd0;
 								s1RegAddr 		<= inst[23:20];
@@ -102,6 +112,7 @@ module Controller (inst, aluCmpIn, sndOpcode, dRegAddr, s1RegAddr, s2RegAddr, im
 								isStore 			<= 1'b0;
 							end
 		4'b1001:begin // load instruction
+                                fstOpcode       <= 4'b1001;
 								sndOpcode 		<= 5'b00000;
 								dRegAddr  		<= inst[23:20];
 								s1RegAddr 		<= inst[19:16];
@@ -116,6 +127,7 @@ module Controller (inst, aluCmpIn, sndOpcode, dRegAddr, s1RegAddr, s2RegAddr, im
 								isStore 			<= 1'b0;
 							end
 		4'b0101:begin // store instruction
+                                fstOpcode       <= 4'b0101;
 								sndOpcode 		<= 5'b00000;
 								dRegAddr  		<= 4'd0;
 								s1RegAddr 		<= inst[23:20];
@@ -130,6 +142,7 @@ module Controller (inst, aluCmpIn, sndOpcode, dRegAddr, s1RegAddr, s2RegAddr, im
 								isStore 			<= 1'b1;
 							end
 		4'b1011:begin // JAL instruction
+                                fstOpcode       <= 4'b1011;
 								sndOpcode 		<= 5'b00000; // addition
 								dRegAddr  		<= inst[23:20];
 								s1RegAddr 		<= inst[19:16];
@@ -144,6 +157,7 @@ module Controller (inst, aluCmpIn, sndOpcode, dRegAddr, s1RegAddr, s2RegAddr, im
 								isStore 			<= 1'b0;
 							end
 		default:begin
+                                fstOpcode       <= 4'b0;
 								sndOpcode 		<= 5'd0;
 								dRegAddr  		<= 4'd0;
 								s1RegAddr 		<= 4'd0;

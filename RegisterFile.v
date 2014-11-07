@@ -17,15 +17,17 @@ module RegisterFile (
 	
 	reg[DATA_BIT_WIDTH - 1: 0] data [0: N_REGS];
 	
-	always @(posedge clk)
+	always @(posedge clk) begin
 		if (wrtEn == 1'b1)
 			data[wrtIndex] <= dataIn;
+    end
 
     wire shouldForwardData1, shouldForwardData2;
-//    assign shouldForwardData1 = wrtEn & wrtIndex == rdIndex1;
-//    assign shouldForwardData2 = wrtEn & wrtIndex == rdIndex2;
-    assign shouldForwardData1 = wrtEn & fstOpcode != OP1_LW & wrtIndex == rdIndex1;
-    assign shouldForwardData2 = wrtEn & fstOpcode != OP1_LW & wrtIndex == rdIndex2;
+    // if the stage 2 opcode is LW, then wrtEn is guaranteed to be false, meaning do not care if forward or not
+    assign shouldForwardData1 = wrtEn & wrtIndex == rdIndex1;
+    assign shouldForwardData2 = wrtEn & wrtIndex == rdIndex2;
+//    assign shouldForwardData1 = wrtEn & fstOpcode != OP1_LW & wrtIndex == rdIndex1;
+//    assign shouldForwardData2 = wrtEn & fstOpcode != OP1_LW & wrtIndex == rdIndex2;
 //    assign shouldForwardData1 = 1'b0;
 //    assign shouldForwardData2 = 1'b0;
 			

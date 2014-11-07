@@ -1,6 +1,7 @@
 module PipelineRegister
 (
-    clk, reset,
+    clk, reset, 
+    inRdIndex1, inRdIndex2,
     inWrtIndex, inRegWrEn, inMulSel, inAluOut, inData2Out, inPC, inInstType, inBrTaken, inIsLoad, inIsStore,
     outWrtIndex, outRegWrEn, outMulSel, outAluOut, outData2Out, outPC, outInstType, outIsLoad, outIsStore,
     isStall
@@ -12,6 +13,9 @@ module PipelineRegister
 
     input clk, reset;
 
+    input [3: 0] inRdIndex1;
+    input [3: 0] inRdIndex2;
+    
     input [0 : 0]   inRegWrEn;
     input [3 : 0]   inWrtIndex;
 
@@ -40,14 +44,21 @@ module PipelineRegister
     reg [0 : 0]  outBrTaken;
 
 
-//    assign isStall = 0;
-    assign isStall =
-      (!prevStall) && (
-        outInstType == OP1_LW
-        | (outInstType == OP1_BR && outBrTaken)
-        | outInstType == OP1_JAL
-    );
+//    assign isStall = 1'b0;
+    assign isStall = 
+        (!prevStall) && 
+        (   
+            outRegWrEn
+            && (outInstType == OP1_LW)
+            && (outWrtIndex == inRdIndex1 | outWrtIndex == inRdIndex2)
+        );
 
+    wire isFlush;
+    assign isFlush = 1'b0; // unnecessary because two stage
+//    assign isFlush = 
+//        (outInstType == OP1_BR && outBrTaken)
+//        | outInstType == OP1_JAL;
+    
     always @(posedge clk) begin
         if (reset == 1'b1) begin
             outWrtIndex <= RESET_VALUE;
@@ -64,15 +75,15 @@ module PipelineRegister
         end
         else begin
             outWrtIndex <= inWrtIndex;
-            outRegWrEn  <= (isStall) ? 1'b0 : inRegWrEn;
+            outRegWrEn  <= (isFlush | isStall) ? 1'b0 : inRegWrEn;
             outMulSel   <= inMulSel;
             outAluOut   <= inAluOut;
             outData2Out <= inData2Out;
             outPC       <= inPC;
             outInstType <= inInstType;
             outBrTaken  <= inBrTaken;
-            outIsLoad   <= (isStall) ? 1'b0 : inIsLoad;
-            outIsStore  <= (isStall) ? 1'b0 : inIsStore;
+            outIsLoad   <= (isFlush | isStall) ? 1'b0 : inIsLoad;
+            outIsStore  <= (isFlush | isStall) ? 1'b0 : inIsStore;
             prevStall   <= isStall;
         end
     end

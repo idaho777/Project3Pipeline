@@ -37,7 +37,7 @@ module Project3(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	parameter ADDR_LEDG 						 = 32'hF0000008;
 
 	parameter IMEM_INIT_FILE				 = "Test2.mif";
-//	parameter IMEM_INIT_FILE				 = "Sort2_counter.mif";
+//	parameter IMEM_INIT_FILE				 = "Sort2.mif";
 //	parameter IMEM_INIT_FILE				 = "Sorter2_asm.mif";
 
 
@@ -71,7 +71,7 @@ module Project3(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 //	wire reset = SW[0];
 
     assign clk = CLOCK_50;
-	wire reset = SW[0];
+    wire reset = SW[0];
 
 	wire [DMEM_DATA_BIT_WIDTH - 1: 0] aluIn2;
 	wire immSel;
@@ -160,6 +160,7 @@ module Project3(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 
 	PipelineRegister #(.OP1_LW(OP1_LW), .OP1_BR(OP1_BCOND), .OP1_JAL(OP1_JAL)) pipelineRegister (
 		.clk(clk), .reset(reset),
+        .inRdIndex1(rdIndex1), .inRdIndex2(rdIndex2),
 		.inWrtIndex(wrtIndex), .inRegWrEn(regFileEn), .inMulSel(memOutSel), .inAluOut(aluOut), .inData2Out(dataOut2),
 		.inPC(pcLogicOut), .inInstType(fstOpcode), .inBrTaken(cmpOut_top), .inIsLoad(isLoad), .inIsStore(isStore),
 		.outWrtIndex(pipeWrtIndex), .outRegWrEn(pipeRegFileEn), .outMulSel(pipeMemOutSel), .outAluOut(pipeAluOut), .outData2Out(pipeDataOut2),

@@ -61,17 +61,17 @@ module PipelineRegister
     
     always @(posedge clk) begin
         if (reset == 1'b1) begin
-            outWrtIndex <= RESET_VALUE;
-            outRegWrEn  <= RESET_VALUE;
-            outMulSel   <= RESET_VALUE;
-            outAluOut   <= RESET_VALUE;
-            outData2Out <= RESET_VALUE;
-            outPC       <= RESET_VALUE;
-            outInstType <= RESET_VALUE;
-            outBrTaken  <= RESET_VALUE;
-            outIsLoad   <= RESET_VALUE;
-            outIsStore  <= RESET_VALUE;
-            prevStall   <= RESET_VALUE;
+            outWrtIndex <= 1'b0;
+            outRegWrEn  <= 1'b0;
+            outMulSel   <= 2'b0;
+            outAluOut   <= 32'b0;
+            outData2Out <= 32'b0;
+            outPC       <= 32'b0;
+            outInstType <= 4'b0;
+            outBrTaken  <= 1'b0;
+            outIsLoad   <= 1'b0;
+            outIsStore  <= 1'b0;
+            prevStall   <= 1'b0;
         end
         else begin
             outWrtIndex <= inWrtIndex;

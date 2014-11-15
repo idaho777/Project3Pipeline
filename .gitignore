@@ -8,9 +8,11 @@
 *.qws
 *.sof
 *.pof
+*.smsg
 
 db/
 incremental_db/
 src/asm/SCAssembler
+simulation/
 work/_temp/
 work/@*

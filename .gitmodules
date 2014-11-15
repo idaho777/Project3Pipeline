@@ -1,0 +1,3 @@
+[submodule "SCAssembler"]
+	path = SCAssembler
+	url = https://github.com/winterfroststrom/SCAssembler

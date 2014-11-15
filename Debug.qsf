@@ -38,7 +38,7 @@
 
 set_global_assignment -name FAMILY "Cyclone II"
 set_global_assignment -name DEVICE EP2C20F484C7
-set_global_assignment -name TOP_LEVEL_ENTITY Project3
+set_global_assignment -name TOP_LEVEL_ENTITY Processor
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 11.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:35:11  SEPTEMBER 27, 2011"
 set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
@@ -530,9 +530,16 @@ set_global_assignment -name VECTOR_OUTPUT_FORMAT VWF
 set_global_assignment -name INCREMENTAL_VECTOR_INPUT_SOURCE "C:/Users/jspark/Desktop/cs3220-examples/Project2/Waveform.vwf"
 set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON
 set_global_assignment -name SLD_FILE "C:/Users/jspark/Desktop/cs3220-examples/Project2/stp1_auto_stripped.stp"
-set_global_assignment -name VERILOG_FILE Project3.v
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name VERILOG_FILE CPU.v
+set_global_assignment -name VERILOG_FILE Processor.v
+set_global_assignment -name VERILOG_FILE Memory.v
+set_global_assignment -name VERILOG_FILE Led.v
+set_global_assignment -name VERILOG_FILE Hex.v
+set_global_assignment -name VERILOG_FILE ClkDivider.v
 set_global_assignment -name VERILOG_FILE PipelineRegister.v
-set_global_assignment -name VERILOG_FILE MemoryUnit.v
 set_global_assignment -name VERILOG_FILE IO_Controller.v
 set_global_assignment -name VERILOG_FILE negRegister.v
 set_global_assignment -name VERILOG_FILE PcLogic.v
@@ -562,7 +569,4 @@ set_global_assignment -name VECTOR_WAVEFORM_FILE Waveform.vwf
 set_global_assignment -name SIGNALTAP_FILE bad_test.stp
 set_global_assignment -name SIGNALTAP_FILE stp1.stp
 set_global_assignment -name VERILOG_FILE Mux4to1.v
-set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
-set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
-set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

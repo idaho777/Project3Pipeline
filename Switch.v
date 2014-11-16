@@ -32,7 +32,7 @@ module Switch(clk, reset, we, re, memAddr, dataBusIn, sw, dataBusOut);
         clk, reset, 1'b1, sw, debounceOut
     );
 
-	assign swWrtEn = (counter == DEBOUNCE_TIME) ? 1 : 0;
+	assign swWrtEn = (counter == DEBOUNCE_TIME) ? 1'b1 : 1'b0;
 	wire [SW_WIDTH - 1: 0] swOut;
 	Register #(.BIT_WIDTH(SW_WIDTH), .RESET_VALUE({SW_WIDTH{1'b0}})) swReg (
         clk, reset, swWrtEn, sw, swOut

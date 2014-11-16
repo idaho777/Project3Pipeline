@@ -3,6 +3,7 @@ module Timer(clk, reset, we, memAddr, dataBusIn, dataBusOut);
 	parameter BASE;
 	parameter TLIM_BASE;
 	parameter CTRL_BASE;
+	parameter TIME_LENGTH;
 	
 	input clk, reset;
 	input we;
@@ -11,6 +12,7 @@ module Timer(clk, reset, we, memAddr, dataBusIn, dataBusOut);
     output [BITS - 1: 0] dataBusOut;
     
 	reg[BITS - 1: 0] timeCount = 0;
+	reg[BITS - 1: 0] counter = 0;
 	
 	wire deviceEnable;
     wire shouldReadData;
@@ -24,24 +26,15 @@ module Timer(clk, reset, we, memAddr, dataBusIn, dataBusOut);
 			timeCount <= 0;
 		end
 		else begin
-			timeCount <= (shouldReadData) ? dataBusIn
+			counter <= counter + 1;
+			if (counter == TIME_LENGTH - 1) begin
+				counter <= 0;
+				timeCount <= (shouldReadData) ? dataBusIn
 					   : (timeCount == timeLimitOut - 1) ? 0
 					   : timeCount + 1;
+			end
 		end
 	end
-	
-	/*
-
-TLIM at F0000024
-Write sets the value, read gets the value
-When TLIM is zero, it has no effect (counter just keeps counting)
-When TLIM!=0, it acts as the limit/target value for the counter
-If  TCNT==TLIM-1 and we want to increment TCNT,
-we reset TCNT back to zero and  set the ready bit (or overflow if Ready already set)
-If TLIM>0, the TCNT never actually becomes equal to TLIM (wraps from TLIM-1 to 0)
-
-
-*/
 	
 	wire limitEnable;
     wire shouldReadLimit;
@@ -55,7 +48,6 @@ If TLIM>0, the TCNT never actually becomes equal to TLIM (wraps from TLIM-1 to 0
         clk, reset, shouldReadLimit, dataBusIn, timeLimitOut
     );
 	
-
 	wire controlEnable;
     wire shouldReadControl;
     wire shouldWriteControl;
@@ -82,9 +74,9 @@ If TLIM>0, the TCNT never actually becomes equal to TLIM (wraps from TLIM-1 to 0
 		clk, reset, shouldReadControl, ctrlRegIn, ctrlOut
 	);
 	
-	assign dataBusOut = shouldReadData ? timeCount
-					  : shouldReadLimit ? timeLimitOut
-					  : shouldReadControl ? ctrlOut
+	assign dataBusOut = shouldWriteData ? timeCount
+					  : shouldWriteLimit ? timeLimitOut
+					  : shouldWriteControl ? ctrlOut
 					  : {BITS{1'b0}};
 endmodule
 

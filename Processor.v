@@ -17,7 +17,8 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
     parameter DMEM_ADDR_BITS_HI                     = DMEM_ADDR_BIT_WIDTH + 2;
     parameter DMEM_ADDR_BITS_LO                     = 2;
 
-   parameter IMEM_INIT_FILE				 = "Test2.mif";
+   parameter IMEM_INIT_FILE				 = "Stopwatch.mif";
+// parameter IMEM_INIT_FILE				 = "Test2.mif";
 //	parameter IMEM_INIT_FILE				 = "Sort2.mif";
 //	parameter IMEM_INIT_FILE				 = "Sorter2_asm.mif";
 
@@ -99,21 +100,11 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 		.dataBusOut(dataBusOut6)
 	);
     
-	Timer #(.BITS(DBITS), .BASE(ADDR_TIMER_COUNT), .TLIM_BASE(ADDR_TIMER_LIMIT), .CTRL_BASE(ADDR_TIMER_CONTROL)) timer(
+	Timer #(.BITS(DBITS), .BASE(ADDR_TIMER_COUNT), .TLIM_BASE(ADDR_TIMER_LIMIT), .CTRL_BASE(ADDR_TIMER_CONTROL), .TIME_LENGTH(100000)) timer(
 		.clk(clk), .reset(reset), .we(we), .memAddr(memAddr), .dataBusIn(dataBus),
 		.dataBusOut(dataBusOut7)
 	);
-	
-    /*
-    wire [9 : 0] swOut;
-    Register #(.BIT_WIDTH(10), .RESET_VALUE(10'b0)) switches(clk, reset, 1'b1, SW, swOut);
-    assign dataBusOut5 = (memAddr == ADDR_SW && (!we))? {{22{1'b0}}, swOut} : 32'b0;
-	
-	wire [3 : 0] keyOut;
-    Register #(.BIT_WIDTH(4), .RESET_VALUE(4'b0)) keys(clk, reset, 1'b1, KEY, keyOut);
-    assign dataBusOut6 = (memAddr == ADDR_KEY && (!we) && re)? {{22{1'b0}}, keyOut} : 32'b0;
-	*/
-    
+
     assign dataBus = dataBusOut0    //cpu
                     | dataBusOut1   //memory
                     | dataBusOut2   //ledr

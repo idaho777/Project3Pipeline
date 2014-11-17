@@ -31,7 +31,7 @@ module Key(clk, reset, we, re, memAddr, dataBusIn, key, dataBusOut);
     assign shouldWriteControl = (!we) & controlEnable;
 	
 	wire readyBit = (shouldWriteData) ? 1'b0 	// Changes to 0 if reading data
-				  : (key != keyOut) ? 1'b1		// Changes to 0 if key data is changed
+				  : (key != keyOut) ? 1'b1		// Changes to 1 if key data is changed
 				  : ctrlOut[0];
 	
 	wire overrunBit = (ctrlOut[0] == 1'b1 & key != keyOut) ? 1'b1	// Changes to 1 if ready bit is 1 and key data changes
@@ -45,7 +45,7 @@ module Key(clk, reset, we, re, memAddr, dataBusIn, key, dataBusOut);
 	
 	wire [BITS - 1: 0] ctrlOut;
 	Register #(.BIT_WIDTH(BITS), .RESET_VALUE(0)) ctrlReg (
-		clk, reset, shouldReadControl, ctrlRegIn, ctrlOut
+		clk, reset, 1'b1, ctrlRegIn, ctrlOut
 	);
     assign dataBusOut = shouldWriteData ? {{(BITS - KEY_WIDTH){1'b0}}, keyOut} 
 					  :	(shouldWriteControl) ? ctrlOut

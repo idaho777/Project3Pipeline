@@ -17,8 +17,8 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
     parameter DMEM_ADDR_BITS_HI                     = DMEM_ADDR_BIT_WIDTH + 2;
     parameter DMEM_ADDR_BITS_LO                     = 2;
 
-   parameter IMEM_INIT_FILE				 = "Stopwatch.mif";
-// parameter IMEM_INIT_FILE				 = "Test2.mif";
+//  parameter IMEM_INIT_FILE				 = "Stopwatch.mif";
+  parameter IMEM_INIT_FILE				 = "Test2.mif";
 //	parameter IMEM_INIT_FILE				 = "Sort2.mif";
 //	parameter IMEM_INIT_FILE				 = "Sorter2_asm.mif";
 
@@ -90,7 +90,7 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
         .dataBusOut(dataBusOut4), .HEX0(HEX0), .HEX1(HEX1), .HEX2(HEX2), .HEX3(HEX3)
     );
 	
-	Switch #(.SW_WIDTH(10), .BITS(DBITS), .BASE(ADDR_SW), .CTRL_BASE(ADDR_SW_CONTROL), .DEBOUNCE_TIME(2500000)) sw(
+	Switch #(.SW_WIDTH(10), .BITS(DBITS), .BASE(ADDR_SW), .CTRL_BASE(ADDR_SW_CONTROL), .DEBOUNCE_TIME(10000000/CLOCK_LENGTH)) sw(
 		.clk(clk), .reset(reset), .we(we), .re(re), .memAddr(memAddr), .dataBusIn(dataBus), .sw(SW),
 		.dataBusOut(dataBusOut5)
 	);
@@ -100,8 +100,8 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 		.dataBusOut(dataBusOut6)
 	);
     
-	Timer #(.BITS(DBITS), .BASE(ADDR_TIMER_COUNT), .TLIM_BASE(ADDR_TIMER_LIMIT), .CTRL_BASE(ADDR_TIMER_CONTROL), .TIME_LENGTH(100000)) timer(
-		.clk(clk), .reset(reset), .we(we), .memAddr(memAddr), .dataBusIn(dataBus),
+	Timer #(.BITS(DBITS), .BASE(ADDR_TIMER_COUNT), .TLIM_BASE(ADDR_TIMER_LIMIT), .CTRL_BASE(ADDR_TIMER_CONTROL), .TIME_LENGTH(1000000/CLOCK_LENGTH)) timer(
+		.clk(clk), .reset(reset), .we(we), .re(re), .memAddr(memAddr), .dataBusIn(dataBus),
 		.dataBusOut(dataBusOut7)
 	);
 

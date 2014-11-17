@@ -1,4 +1,4 @@
-module Timer(clk, reset, we, memAddr, dataBusIn, dataBusOut);
+module Timer(clk, reset, we, re, memAddr, dataBusIn, dataBusOut);
 	parameter BITS;
 	parameter BASE;
 	parameter TLIM_BASE;
@@ -6,7 +6,7 @@ module Timer(clk, reset, we, memAddr, dataBusIn, dataBusOut);
 	parameter TIME_LENGTH;
 	
 	input clk, reset;
-	input we;
+	input we, re;
 	input [BITS - 1: 0] memAddr;
     input [BITS - 1: 0] dataBusIn;
     output [BITS - 1: 0] dataBusOut;
@@ -19,19 +19,22 @@ module Timer(clk, reset, we, memAddr, dataBusIn, dataBusOut);
     wire shouldWriteData;
     assign deviceEnable = memAddr == BASE;
     assign shouldReadData = we & deviceEnable;
-    assign shouldWriteData = (!we) & deviceEnable;
+    assign shouldWriteData = re & (!we) & deviceEnable;
 
 	always @(posedge clk) begin
 		if (reset) begin
 			timeCount <= 0;
 		end
+		else if (shouldReadData) begin
+			counter <= 0;
+			timeCount <= dataBusIn;
+		end
 		else begin
 			counter <= counter + 1;
 			if (counter == TIME_LENGTH - 1) begin
 				counter <= 0;
-				timeCount <= (shouldReadData) ? dataBusIn
-					   : (timeCount == timeLimitOut - 1) ? 0
-					   : timeCount + 1;
+				timeCount <= (timeCount == timeLimitOut - 1) ? 0
+						    : timeCount + 1;
 			end
 		end
 	end
@@ -56,7 +59,7 @@ module Timer(clk, reset, we, memAddr, dataBusIn, dataBusOut);
     assign shouldWriteControl = (!we) & controlEnable;
 
 	wire readyBit = (shouldWriteData) ? 1'b0 	// Changes to 0 if reading data
-				  : (timeCount == timeLimitOut - 1) ? 1'b1	// Changes to 0 if timeCount reaches timeLimitOut
+				  : (timeCount == timeLimitOut - 1) ? 1'b1	// Changes to 1 if timeCount reaches timeLimitOut
 				  : ctrlOut[0];
 						
 					   // Changes to 1 if ready bit is 1 and timeCount reaches timeLimitOut again
@@ -71,7 +74,7 @@ module Timer(clk, reset, we, memAddr, dataBusIn, dataBusOut);
 	
 	wire [BITS - 1: 0] ctrlOut;
 	Register #(.BIT_WIDTH(BITS), .RESET_VALUE(0)) ctrlReg (
-		clk, reset, shouldReadControl, ctrlRegIn, ctrlOut
+		clk, reset, 1'b1, ctrlRegIn, ctrlOut
 	);
 	
 	assign dataBusOut = shouldWriteData ? timeCount

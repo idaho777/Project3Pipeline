@@ -65,226 +65,130 @@ AtZero:
     F       s0, s0, s0          ; init zero register
     ADD     gp, s0, s0          ; set io base
 	MVHI	gp, IOBASE
+    ADDI    s1, s0, 0xFFF
+	SW      s1, OFSTIMERLMT(gp)
 BeginState:
-    ADD     sp, s0, s0          ; reset stack
-	ADDI	sp, s0, STACKTOP
-    ; set output pins to zero
-	SW      s0, OFSLEDG(gp)
-	SW      s0, OFSLEDR(gp)
-	SW      s0, OFSHEX(gp)
+    SW      s0, OFSHEX(gp)
+    SW      s0, OFSLEDR(gp)
+    SW      s0, OFSLEDG(gp)
 
-    ADDI    a0, s0, KEY1MASK
-    CALL    WaitForKeyPress(s0)
-    ADDI    a0, s0, KEY1MASK
-    CALL    WaitForKeyRelease(s0)
-    CALL    SetState(s0)
-    BGTZ    rv, BeginState
+    LW      t0, OFSKEYCTL(gp)
+    ANDI    t0, t0, READYMASK
+    BEQZ    t0, BeginState
+    LW      t0, OFSKEY(gp)
+    ANDI    t1, t0, KEY1MASK
+    BNEZ    t1, BeginState      ; assume key on is 0
+    F       s1, s1, s1
+    F       s2, s2, s2
+    F       a0, a0, a0
+    BR      SetSecondState
     
-    CALL    RunState(s0)
-    BGTZ    rv, BeginState
+SetSecondState:
+    LW      s1, OFSSW(gp)
+    ANDI    s1, s1, 0x00FF
+    ADD     a0, s1, s2
+    SW      a0, OFSHEX(gp)
+
+    LW      t0, OFSKEYCTL(gp)
+    ANDI    t0, t0, READYMASK
+    BEQZ    t0, SetSecondState
+    LW      t0, OFSKEY(gp)
+    ANDI    t1, t0, KEY0MASK
+    BEQZ    t1, BeginState      ; assume key on is 0
+    ANDI    t1, t0, KEY1MASK
+    BEQZ    t1, SetMinuteState      ; assume key on is 0
+    ANDI    t1, t0, KEY2MASK
+    BNEZ    t1, SetSecondState      ; assume key on is 0
+    BR      RunningStateInit
+
+SetMinuteState:
+    LW      s2, OFSSW(gp)
+    ADD     s2, s2, s2      ; x2
+    ADD     s2, s2, s2      ; x4
+    ADD     s2, s2, s2      ; x8
+    ADD     s2, s2, s2      ; x16
+    ADD     s2, s2, s2      ; x32
+    ADD     s2, s2, s2      ; x64
+    ADD     s2, s2, s2      ; x128
+    ADD     s2, s2, s2      ; x256
+    ANDI    s2, s2, 0xFF00
+    ADD     a0, s1, s2
+    SW      a0, OFSHEX(gp)
+
+    LW      t0, OFSKEYCTL(gp)
+    ANDI    t0, t0, READYMASK
+    BEQZ    t0, SetMinuteState
+    LW      t0, OFSKEY(gp)
+    ANDI    t1, t0, KEY0MASK
+    BEQZ    t1, BeginState      ; assume key on is 0
+    ANDI    t1, t0, KEY1MASK
+    BEQZ    t1, SetSecondState      ; assume key on is 0
+    ANDI    t1, t0, KEY2MASK
+    BNEZ    t1, SetMinuteState      ; assume key on is 0
+    BR      RunningStateInit
     
-    CALL    FlashState(s0)
+RunningStateInit:
+    F       s1, s1, s1
+    SW      s1, OFSTIMERCNT(gp)
+    SW      s1, OFSTIMERCTL(gp)
+RunningState:
+    SW      s1, OFSTIMERCNT(gp)
+RunningStateLoop:
+    LW      t0, OFSTIMERCTL(gp)
+    ANDI    t0, t0, READYMASK
+    BNEZ    t0, FlashingState
+    LW      s1, OFSTIMERCNT(gp)
+    SW      s1, OFSHEX(gp)
+    BGTE    s1, a0, FlashingState
+    LW      t0, OFSTIMERCTL(gp)
+    ANDI    t0, t0, READYMASK
+    BNEZ    t0, FlashingState
+
+    LW      t0, OFSKEYCTL(gp)
+    ANDI    t0, t0, READYMASK
+    BEQZ    t0, RunningStateSkipKeyChecks
+    LW      t0, OFSKEY(gp)
+    ANDI    t1, t0, KEY0MASK
+    BEQZ    t1, BeginState      ; assume key on is 0
+    ANDI    t1, t0, KEY2MASK
+    BEQZ    t1, StoppedState      ; assume key on is 0
+RunningStateSkipKeyChecks:
+    BR      RunningStateLoop
+    
+StoppedState:
+    LW      t0, OFSKEYCTL(gp)
+    ANDI    t0, t0, READYMASK
+    BEQZ    t0, StoppedStateSkipKeyChecks
+    LW      t0, OFSKEY(gp)
+    ANDI    t1, t0, KEY0MASK
+    BEQZ    t1, BeginState      ; assume key on is 0
+    ANDI    t1, t0, KEY2MASK
+    BEQZ    t1, RunningState      ; assume key on is 0
+StoppedStateSkipKeyChecks:
+    BLT     s1, a0, StoppedState
+    BR      FlashingState
+    
+FlashingState:
+    F       s1, s1, s1
+    ADDI    t0, s0, HSECOND
+    SW      t0, OFSTIMERLMT(gp)
+    SW      s0, OFSHEX(gp)
+FlashingStateMain:
+    SW      s0, OFSTIMERCNT(gp)
+    NOT     s1, s1
+FlashingStateLoop:
+    SW      s1, OFSLEDG(gp)
+FlashingStateResetCheck:
+    LW      t0, OFSKEYCTL(gp)
+    ANDI    t0, t0, READYMASK
+    BEQZ    t0, FlashingStateNegateCheck
+    LW      t0, OFSKEY(gp)
+    ANDI    t1, t0, KEY0MASK
+    BEQZ    t1, BeginState      ; assume key on is 0
+FlashingStateNegateCheck:
+    LW      t0, OFSTIMERCTL(gp)
+    ANDI    t0, t0, READYMASK
+    BEQZ    t0, FlashingStateLoop
+    LW      t0, OFSTIMERCNT(gp)     ; set timer ready bit to zero
+    BR      FlashingStateMain
     BR      BeginState
-
-; @return rv 1 if reset, otherwise 0
-SetState:
-    ; method preamble begin
-        SW      ra, 0(sp)
-        ADDI    sp, sp, -1
-    ; method preamble end
-        ; TODO: make this seconds and minutes maybe
-    SSWaitForKey1Second:
-        LW      s1, OFSSW(gp)
-        ANDI    s1, s1, 0x003F
-        SW      s1, OFSHEX(gp)
-        ; key1 press logic
-        ADDI    a0, s0, KEY1MASK
-        ADDI    a1, s0, 1
-        CALL    CheckKey(s0)
-        BNEZ    rv, SSWaitForKey1Second
-        ADDI    a0, s0, KEY1MASK        
-        CALL    WaitForKeyRelease(s0)
-    SSWaitForKey1Minute:        
-        LW      t0, OFSSW(gp)
-        ADD     t0, t0, t0      ; x2
-        ADD     t0, t0, t0      ; x4
-        ADD     t0, t0, t0      ; x8
-        ADD     t0, t0, t0      ; x16
-        ANDI     t0, t0, 0x3F00
-        ADD     s2, t0, s1
-        SW      s2, OFSHEX(gp)
-        ; key1 press logic
-        ADDI    a0, s0, KEY1MASK
-        ADDI    a1, s0, 1
-        CALL    CheckKey(s0)
-        BNEZ    rv, SSWaitForKey1Minute
-        CALL    WaitForKeyRelease(s0)
-        SW      s2, OFSTIMERLMT(gp) ; TODO: does setting the limit reset the ready bit or counter?
-        BR      SSDone
-    SSDone:
-        F       rv, rv, rv
-    ; method epilogue begin
-        LW      ra, 1(sp)
-        ADDI    sp, sp, 1
-        RET
-    ; method preamble end
-
-; @return rv 1 if reset, otherwise 0
-RunState:
-    ; method preamble begin
-        SW      ra, 0(sp)
-        ADDI    sp, sp, -1
-    ; method preamble end
-    RSWaitForTimer:
-        LW      s1, OFSTIMERCNT(gp)
-        SW      s1, OFSHEX(gp)
-        LW      s2, OFSTIMERCTL(gp)
-        ANDI    t0, t0, READYMASK
-        BNEZ    t0, RSDone
-        ; check for key2 for stopping
-        ADDI    a0, s0, KEY2MASK
-        ADDI    a1, s0, 1
-        CALL    CheckKey(s0)
-        BEQZ    rv, RSStopped
-        BR      RSWaitForTimer
-    RSStopped:
-        ADDI    a0, s0, KEY2MASK
-        CALL    WaitForKeyRelease(s0)
-        ADDI    a0, s0, KEY2MASK
-        CALL    WaitForKeyPress(s0)
-        ADDI    a0, s0, KEY2MASK
-        CALL    WaitForKeyRelease(s0)
-        BR      RSRestart
-    RSRestart:
-        SW      s1, OFSTIMERCNT(gp)
-        SW      s0, OFSTIMERCTL(gp)
-        BR      RSWaitForTimer
-    RSDone:
-        F       rv, rv, rv        
-    ; method epilogue begin
-        LW      ra, 1(sp)
-        ADDI    sp, sp, 1
-        RET
-    ; method preamble end
-
-; @return rv 1 if reset, otherwise 0
-FlashState:
-    ; method preamble begin
-        SW      ra, 0(sp)
-        ADDI    sp, sp, -1
-    ; method preamble end
-        ADDI    a0, s0, HSECOND
-        SW      a0, OFSTIMERLMT(gp) ; set counter to half a second
-        SW      s0, OFSTIMERCTL(gp) ; reset value of timer to zero
-        ADD     s1, s0, s0
-    FSFlashing:
-        SW      s1, OFSLEDG(gp)
-        LW      a0, OFSTIMERCNT(gp) ; get timer control
-        ANDI    a0, a0, READYMASK   ; mask for ready bit
-        BNEZ    a0, FSSkipNegate
-        NOT     s1, s1              ; negate ledg value
-    FSSkipNegate:
-        ADDI    a0, s0, KEY0MASK
-        ADDI    a1, s0, 1
-        CALL    CheckKey(s0)
-        BEQZ    rv, FSDone
-        BR      FSFlashing
-    FSDone:
-        ADDI    rv, s0, 1
-    ; method epilogue begin
-        LW      ra, 1(sp)
-        ADDI    sp, sp, 1
-        RET
-    ; method epilogue end
-
-; @param a0 key mask
-WaitForKeyPress:
-    ; method preamble begin
-        SW      ra, 0(sp)
-        ADDI    sp, sp, -1
-    ; method preamble end
-    WaitForKeyPressCheck:
-        ADDI    a1, s0, 1
-        CALL    CheckKey(s0)
-        BNEZ    rv, WaitForKeyPressCheck
-    ; method epilogue begin
-        LW      ra, 1(sp)
-        ADDI    sp, sp, 1
-        RET
-    ; method preamble end
-    
-; @param a0 key mask
-WaitForKeyRelease:
-    ; method preamble begin
-        SW      ra, 0(sp)
-        ADDI    sp, sp, -1
-    ; method preamble end
-    WaitForKeyReleaseCheck:
-        ADDI    a1, s0, 0
-        CALL    CheckKey(s0)
-        BEQZ    rv, WaitForKeyReleaseCheck
-    ; method epilogue begin
-        LW      ra, 1(sp)
-        ADDI    sp, sp, 1
-        RET
-    ; method preamble end
-
-; @param a0 key mask
-; @param a1 default return value
-; @return rv key value
-CheckKey:
-    ; method preamble begin
-        SW      ra, 0(sp)
-        ADDI    sp, sp, -1
-    ; method preamble end
-        AND     rv, a1, a1
-        ; check if ready bit is one
-        LW      t0, OFSKEYCTL(gp)
-        ANDI    t0, t0, READYMASK
-        BEQZ    t0, CheckResetDone
-        LW      t0, OFSKEY(gp)
-        AND     rv, t0, a0
-    CheckResetDone:
-    ; method epilogue begin
-        LW      ra, 1(sp)
-        ADDI    sp, sp, 1
-        RET
-
-MethodTemplateShort:
-    ; method preamble begin
-        SW      ra, 0(sp)
-        ADDI    sp, sp, -1
-        F       rv, rv, rv
-    ; method preamble end
-        
-    ; method epilogue begin
-        LW      ra, 1(sp)
-        ADDI    sp, sp, 1
-        RET
-    ; method preamble end
-
-        
-MethodTemplateLong:
-    ; method preamble begin
-;        SW      s0, 0(sp)
-;        ADDI    sp, sp, -1
-;        SW      s1, 0(sp)
-;        ADDI    sp, sp, -1
-;        SW      s2, 0(sp)
-;        ADDI    sp, sp, -1    
-        SW      ra, 0(sp)
-        ADDI    sp, sp, -1
-        F       rv, rv, rv
-    ; method preamble end
-        
-    ; method epilogue begin
-        LW      ra, 1(sp)
-        ADDI    sp, sp, 1
-;        LW      s2, 1(sp)
-;        ADDI    sp, sp, 1
-;        LW      s1, 1(sp)
-;        ADDI    sp, sp, 1
-;        LW      s0, 1(sp)
-;        ADDI    sp, sp, 1
-        RET
-    ; method preamble end

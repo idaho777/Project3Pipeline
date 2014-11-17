@@ -22,9 +22,11 @@ module Switch(clk, reset, we, re, memAddr, dataBusIn, sw, dataBusOut);
 	reg[BITS - 1: 0] counter = 0;
 	wire swWrtEn;
 	always @(posedge clk) begin
-		counter <= (counter == DEBOUNCE_TIME) ? counter : counter + 1;
-		if (sw != debounceOut)
-			counter <= 0;
+        if (reset || sw != debounceOut) begin
+            counter <= 0;
+        end else if (sw != swOut) begin
+            counter <= (counter == DEBOUNCE_TIME) ? 0 : counter + 1;
+        end
 	end
 
 	wire [SW_WIDTH - 1: 0] debounceOut;
@@ -35,7 +37,7 @@ module Switch(clk, reset, we, re, memAddr, dataBusIn, sw, dataBusOut);
 	assign swWrtEn = (counter == DEBOUNCE_TIME) ? 1'b1 : 1'b0;
 	wire [SW_WIDTH - 1: 0] swOut;
 	Register #(.BIT_WIDTH(SW_WIDTH), .RESET_VALUE({SW_WIDTH{1'b0}})) swReg (
-        clk, reset, swWrtEn, sw, swOut
+        clk, reset, swWrtEn, debounceOut, swOut
     );
 	
 	wire controlEnable;
@@ -46,10 +48,10 @@ module Switch(clk, reset, we, re, memAddr, dataBusIn, sw, dataBusOut);
     assign shouldWriteControl = (!we) & controlEnable;
 	
 	wire readyBit = (shouldWriteData) ? 1'b0 	// Changes to 0 if reading data
-				  : (sw != swOut) ? 1'b1		// Changes to 1 if sw data is changed
+				  : (swWrtEn) ? 1'b1		// Changes to 1 if sw data is changed
 				  : ctrlOut[0];
 	
-	wire overrunBit = (ctrlOut[0] == 1'b1 & sw != swOut) ? 1'b1		// Changes to 1 if ready bit is 1 and sw data changes
+	wire overrunBit = (ctrlOut[0] == 1'b1 && swWrtEn) ? 1'b1		// Changes to 1 if ready bit is 1 and sw data changes
 					: (shouldReadControl & dataBusIn[2] == 1'b0) ? 1'b0		// Changes to 0 if reading in 0
 					: ctrlOut[2];
 	

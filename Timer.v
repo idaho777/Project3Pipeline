@@ -59,11 +59,11 @@ module Timer(clk, reset, we, re, memAddr, dataBusIn, dataBusOut);
     assign shouldWriteControl = (!we) & controlEnable;
 
 	wire readyBit = (shouldWriteData) ? 1'b0 	// Changes to 0 if reading data
-				  : (timeCount == timeLimitOut - 1) ? 1'b1	// Changes to 1 if timeCount reaches timeLimitOut
+				  : (timeCount == timeLimitOut - 1 & counter == 0) ? 1'b1	// Changes to 1 if timeCount reaches timeLimitOut
 				  : ctrlOut[0];
 						
 					   // Changes to 1 if ready bit is 1 and timeCount reaches timeLimitOut again
-	wire overrunBit = (ctrlOut[0] == 1'b1 & timeCount == timeLimitOut - 1) ? 1'b1	
+	wire overrunBit = (ctrlOut[0] == 1'b1 & timeCount == timeLimitOut - 1 & counter == 0) ? 1'b1	
 					: (shouldReadControl & dataBusIn[2] == 1'b0) ? 1'b0		// Changes to 0 if reading in 0
 					: ctrlOut[2];
 	

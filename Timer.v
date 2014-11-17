@@ -25,9 +25,13 @@ module Timer(clk, reset, we, re, memAddr, dataBusIn, dataBusOut);
 		if (reset) begin
 			timeCount <= 0;
 		end
+        else if (shouldReadLimit) begin
+            counter <= 0;
+            timeCount <= 0;
+        end
 		else if (shouldReadData) begin
 			counter <= 0;
-			timeCount <= dataBusIn;
+			timeCount <= (dataBusIn > timeLimitOut - 1) ? 0 : dataBusIn;
 		end
 		else begin
 			counter <= counter + 1;
@@ -66,7 +70,7 @@ module Timer(clk, reset, we, re, memAddr, dataBusIn, dataBusOut);
 	wire overrunBit = (ctrlOut[0] == 1'b1 & timeCount == timeLimitOut - 1 & counter == 0) ? 1'b1	
 					: (shouldReadControl & dataBusIn[2] == 1'b0) ? 1'b0		// Changes to 0 if reading in 0
 					: ctrlOut[2];
-	
+
 	wire ieBit = (shouldReadControl) ? dataBusIn[8]
 				: ctrlOut[8];
 				

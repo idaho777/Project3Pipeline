@@ -1,0 +1,290 @@
+; Addresses for I/O
+.NAME   IOBASE      = 0xF0000000
+
+.NAME	OFSHEX      = 0x00000000
+.NAME	OFSLEDR     = 0x00000004
+.NAME	OFSLEDG     = 0x00000008
+.NAME	OFSKEY      = 0x00000010
+.NAME	OFSSW       = 0x00000014
+.NAME	OFSTIMERCNT = 0x00000020
+.NAME	OFSTIMERLMT = 0x00000024
+
+.NAME	OFSKEYCTL   = 0x00000110
+.NAME	OFSSWCTL    = 0x00000114
+.NAME	OFSTIMERCTL = 0x00000120
+
+.NAME   KEY0MASK    = 0x0001
+.NAME   KEY1MASK    = 0x0002
+.NAME   KEY2MASK    = 0x0004
+.NAME   KEY3MASK    = 0x0008
+.NAME   HEX0MASK    = 0x000F
+.NAME   HEX1MASK    = 0x00F0
+.NAME   HEX2MASK    = 0x0F00
+.NAME   HEX3MASK    = 0xF000
+.NAME   SWITCH0MASK = 0x0001
+.NAME   SWITCH1MASK = 0x0002
+.NAME   SWITCH2MASK = 0x0004
+.NAME   SWITCH3MASK = 0x0008
+.NAME   SWITCH4MASK = 0x0010
+.NAME   SWITCH5MASK = 0x0020
+.NAME   SWITCH6MASK = 0x0040
+.NAME   SWITCH7MASK = 0x0080
+.NAME   SWITCH8MASK = 0x0100
+.NAME   SWITCH9MASK = 0x0200
+
+.NAME	STACKTOP    = 8191
+.NAME   READYMASK   = 0x00000001
+.NAME   OVERUNMASK  = 0x00000004
+.NAME   INTAMASK    = 0x00000080
+.NAME   SECOND      = 0x000003E8
+.NAME   HSECOND     = 0x000001F4
+
+	; This should never be executed
+	.ORIG 0
+	bt			t0,t0,AtZero
+	addi		s1,s1,0x1
+	addi		s1,s1,0x1
+	addi		s1,s1,0x1
+	addi		s1,s1,0x1
+	addi		s1,s1,0x1
+	addi		s1,s1,0x1
+	addi		s1,s1,0x1
+	addi		s1,s1,0x1
+AtZero:
+	; Turn on LEDR, display 0xBAD on HEX
+	mvhi	gp,IOBASE
+	andi	s0,s0,0
+	not		t0,s0
+	sw		t0,OFSLEDR(gp)
+	addi	t0,s0,0xBAD
+	sw		t0,OFSHEX(gp)
+	bt		t0,t0,AtZero
+	
+	; Now the actual code
+	.ORIG 0x40
+    F       s0, s0, s0          ; init zero register
+    ADD     gp, s0, s0          ; set io base
+	MVHI	gp, IOBASE
+BeginState:
+    ADD     sp, s0, s0          ; reset stack
+	ADDI	sp, s0, STACKTOP
+    ; set output pins to zero
+	SW      s0, OFSLEDG(gp)
+	SW      s0, OFSLEDR(gp)
+	SW      s0, OFSHEX(gp)
+
+    ADDI    a0, s0, KEY1MASK
+    CALL    WaitForKeyPress(s0)
+    ADDI    a0, s0, KEY1MASK
+    CALL    WaitForKeyRelease(s0)
+    CALL    SetState(s0)
+    BGTZ    rv, BeginState
+    
+    CALL    RunState(s0)
+    BGTZ    rv, BeginState
+    
+    CALL    FlashState(s0)
+    BR      BeginState
+
+; @return rv 1 if reset, otherwise 0
+SetState:
+    ; method preamble begin
+        SW      ra, 0(sp)
+        ADDI    sp, sp, -4
+    ; method preamble end
+        ; TODO: make this seconds and minutes maybe
+    SSWaitForKey1Second:
+        LW      s1, OFSSW(gp)
+        ANDI    s1, s1, 0x003F
+        SW      s1, OFSHEX(gp)
+        ; key1 press logic
+        ADDI    a0, s0, KEY1MASK
+        ADDI    a1, s0, 1
+        CALL    CheckKey(s0)
+        BNEZ    rv, SSWaitForKey1Second
+        ADDI    a0, s0, KEY1MASK        
+        CALL    WaitForKeyRelease(s0)
+    SSWaitForKey1Minute:        
+        LW      t0, OFSSW(gp)
+        ADD     t0, t0, t0      ; x2
+        ADD     t0, t0, t0      ; x4
+        ADD     t0, t0, t0      ; x8
+        ADD     t0, t0, t0      ; x16
+        ANDI     t0, t0, 0x3F00
+        ADD     s2, t0, s1
+        SW      s2, OFSHEX(gp)
+        ; key1 press logic
+        ADDI    a0, s0, KEY1MASK
+        ADDI    a1, s0, 1
+        CALL    CheckKey(s0)
+        BNEZ    rv, SSWaitForKey1Minute
+        CALL    WaitForKeyRelease(s0)
+        SW      s2, OFSTIMERLMT(gp) ; TODO: does setting the limit reset the ready bit or counter?
+        BR      SSDone
+    SSDone:
+        F       rv, rv, rv
+    ; method epilogue begin
+        LW      ra, 4(sp)
+        ADDI    sp, sp, 4
+        RET
+    ; method preamble end
+
+; @return rv 1 if reset, otherwise 0
+RunState:
+    ; method preamble begin
+        SW      ra, 0(sp)
+        ADDI    sp, sp, -4
+    ; method preamble end
+    RSWaitForTimer:
+        LW      s1, OFSTIMERCNT(gp)
+        SW      s1, OFSHEX(gp)
+        LW      s2, OFSTIMERCTL(gp)
+        ANDI    t0, t0, READYMASK
+        BNEZ    t0, RSDone
+        ; check for key2 for stopping
+        ADDI    a0, s0, KEY2MASK
+        ADDI    a1, s0, 1
+        CALL    CheckKey(s0)
+        BEQZ    rv, RSStopped
+        BR      RSWaitForTimer
+    RSStopped:
+        ADDI    a0, s0, KEY2MASK
+        CALL    WaitForKeyRelease(s0)
+        ADDI    a0, s0, KEY2MASK
+        CALL    WaitForKeyPress(s0)
+        ADDI    a0, s0, KEY2MASK
+        CALL    WaitForKeyRelease(s0)
+        BR      RSRestart
+    RSRestart:
+        SW      s1, OFSTIMERCNT(gp)
+        SW      s0, OFSTIMERCTL(gp)
+        BR      RSWaitForTimer
+    RSDone:
+        F       rv, rv, rv        
+    ; method epilogue begin
+        LW      ra, 4(sp)
+        ADDI    sp, sp, 4
+        RET
+    ; method preamble end
+
+; @return rv 1 if reset, otherwise 0
+FlashState:
+    ; method preamble begin
+        SW      ra, 0(sp)
+        ADDI    sp, sp, -4
+    ; method preamble end
+        ADDI    a0, s0, HSECOND
+        SW      a0, OFSTIMERLMT(gp) ; set counter to half a second
+        SW      s0, OFSTIMERCTL(gp) ; reset value of timer to zero
+        ADD     s1, s0, s0
+    FSFlashing:
+        SW      s1, OFSLEDG(gp)
+        LW      a0, OFSTIMERCNT(gp) ; get timer control
+        ANDI    a0, a0, READYMASK   ; mask for ready bit
+        BNEZ    a0, FSSkipNegate
+        NOT     s1, s1              ; negate ledg value
+    FSSkipNegate:
+        ADDI    a0, s0, KEY0MASK
+        ADDI    a1, s0, 1
+        CALL    CheckKey(s0)
+        BEQZ    rv, FSDone
+        BR      FSFlashing
+    FSDone:
+        ADDI    rv, s0, 1
+    ; method epilogue begin
+        LW      ra, 4(sp)
+        ADDI    sp, sp, 4
+        RET
+    ; method epilogue end
+
+; @param a0 key mask
+WaitForKeyPress:
+    ; method preamble begin
+        SW      ra, 0(sp)
+        ADDI    sp, sp, -4
+    ; method preamble end
+    WaitForKeyPressCheck:
+        ADDI    a1, s0, 1
+        CALL    CheckKey(s0)
+        BNEZ    rv, WaitForKeyPressCheck
+    ; method epilogue begin
+        LW      ra, 4(sp)
+        ADDI    sp, sp, 4
+        RET
+    ; method preamble end
+    
+; @param a0 key mask
+WaitForKeyRelease:
+    ; method preamble begin
+        SW      ra, 0(sp)
+        ADDI    sp, sp, -4
+    ; method preamble end
+    WaitForKeyReleaseCheck:
+        ADDI    a1, s0, 0
+        CALL    CheckKey(s0)
+        BEQZ    rv, WaitForKeyReleaseCheck
+    ; method epilogue begin
+        LW      ra, 4(sp)
+        ADDI    sp, sp, 4
+        RET
+    ; method preamble end
+
+; @param a0 key mask
+; @param a1 default return value
+; @return rv key value
+CheckKey:
+    ; method preamble begin
+        SW      ra, 0(sp)
+        ADDI    sp, sp, -4
+    ; method preamble end
+        AND     rv, a1, a1
+        ; check if ready bit is one
+        LW      t0, OFSKEYCTL(gp)
+        ANDI    t0, t0, READYMASK
+        BEQZ    t0, CheckResetDone
+        LW      t0, OFSKEY(gp)
+        AND     rv, t0, a0
+    CheckResetDone:
+    ; method epilogue begin
+        LW      ra, 4(sp)
+        ADDI    sp, sp, 4
+        RET
+
+MethodTemplateShort:
+    ; method preamble begin
+        SW      ra, 0(sp)
+        ADDI    sp, sp, -4
+        F       rv, rv, rv
+    ; method preamble end
+        
+    ; method epilogue begin
+        LW      ra, 4(sp)
+        ADDI    sp, sp, 4
+        RET
+    ; method preamble end
+
+        
+MethodTemplateLong:
+    ; method preamble begin
+;        SW      s0, 0(sp)
+;        ADDI    sp, sp, -4
+;        SW      s1, 0(sp)
+;        ADDI    sp, sp, -4
+;        SW      s2, 0(sp)
+;        ADDI    sp, sp, -4    
+        SW      ra, 0(sp)
+        ADDI    sp, sp, -4
+        F       rv, rv, rv
+    ; method preamble end
+        
+    ; method epilogue begin
+        LW      ra, 4(sp)
+        ADDI    sp, sp, 4
+;        LW      s2, 4(sp)
+;        ADDI    sp, sp, 4
+;        LW      s1, 4(sp)
+;        ADDI    sp, sp, 4
+;        LW      s0, 4(sp)
+;        ADDI    sp, sp, 4
+        RET
+    ; method preamble end

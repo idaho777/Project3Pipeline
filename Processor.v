@@ -17,8 +17,9 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
     parameter DMEM_ADDR_BITS_HI                     = DMEM_ADDR_BIT_WIDTH + 2;
     parameter DMEM_ADDR_BITS_LO                     = 2;
 
-//  parameter IMEM_INIT_FILE				 = "Stopwatch.mif";
-  parameter IMEM_INIT_FILE				 = "Test2.mif";
+    
+    parameter IMEM_INIT_FILE				 = "Stopwatch.mif";
+//  parameter IMEM_INIT_FILE				 = "Test2.mif";
 //	parameter IMEM_INIT_FILE				 = "Sort2.mif";
 //	parameter IMEM_INIT_FILE				 = "Sorter2_asm.mif";
 

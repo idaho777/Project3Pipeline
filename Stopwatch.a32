@@ -65,8 +65,6 @@ AtZero:
     F       s0, s0, s0          ; init zero register
     ADD     gp, s0, s0          ; set io base
 	MVHI	gp, IOBASE
-    ADDI    s1, s0, 0xFFF
-	SW      s1, OFSTIMERLMT(gp)
 BeginState:
     SW      s0, OFSHEX(gp)
     SW      s0, OFSLEDR(gp)
@@ -129,20 +127,15 @@ SetMinuteState:
     
 RunningStateInit:
     F       s1, s1, s1
-    SW      s1, OFSTIMERCNT(gp)
-    SW      s1, OFSTIMERCTL(gp)
+    F       s2, s2, s2
+    SW      s0, OFSTIMERCNT(gp)
+    ADDI    t0, s0, SECOND
+    SW      t0, OFSTIMERLMT(gp)
 RunningState:
     SW      s1, OFSTIMERCNT(gp)
 RunningStateLoop:
-    LW      t0, OFSTIMERCTL(gp)
-    ANDI    t0, t0, READYMASK
-    BNEZ    t0, FlashingState
-    LW      s1, OFSTIMERCNT(gp)
-    SW      s1, OFSHEX(gp)
-    BGTE    s1, a0, FlashingState
-    LW      t0, OFSTIMERCTL(gp)
-    ANDI    t0, t0, READYMASK
-    BNEZ    t0, FlashingState
+    SW      s2, OFSHEX(gp)
+    BGTE    s2, a0, FlashingState
 
     LW      t0, OFSKEYCTL(gp)
     ANDI    t0, t0, READYMASK
@@ -151,10 +144,21 @@ RunningStateLoop:
     ANDI    t1, t0, KEY0MASK
     BEQZ    t1, BeginState      ; assume key on is 0
     ANDI    t1, t0, KEY2MASK
-    BEQZ    t1, StoppedState      ; assume key on is 0
+    BEQZ    t1, StoppedStateInit      ; assume key on is 0
 RunningStateSkipKeyChecks:
+    LW      t0, OFSTIMERCTL(gp)
+    ANDI    t0, t0, READYMASK
+    BEQZ    t0, RunningStateLoop
+    LW      t0, OFSTIMERCNT(gp)     ; set timer ready bit to zero
+    ADDI    s2, s2, 1
     BR      RunningStateLoop
     
+StoppedStateInit:
+    LW      t0, OFSTIMERCTL(gp)
+    ANDI    t0, t0, READYMASK
+    LW      s1, OFSTIMERCNT(gp)     ; set timer ready bit to zero
+    BEQZ    t0, StoppedState
+    ADDI    s2, s2, 1
 StoppedState:
     LW      t0, OFSKEYCTL(gp)
     ANDI    t0, t0, READYMASK
@@ -165,7 +169,7 @@ StoppedState:
     ANDI    t1, t0, KEY2MASK
     BEQZ    t1, RunningState      ; assume key on is 0
 StoppedStateSkipKeyChecks:
-    BLT     s1, a0, StoppedState
+    BLT     s2, a0, StoppedState
     BR      FlashingState
     
 FlashingState:

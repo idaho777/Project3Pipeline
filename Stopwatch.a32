@@ -38,6 +38,10 @@
 .NAME   INTAMASK    = 0x00000080
 .NAME   SECOND      = 0x000003E8
 .NAME   HSECOND     = 0x000001F4
+.NAME   HEX60       = 0x0000003c
+.NAME   HEX59       = 0x0000003b
+.NAME   HEX09        = 0x0000009
+.NAME   HEX06        = 0x0000006
 
 	; This should never be executed
 	.ORIG 0
@@ -84,7 +88,20 @@ BeginState:
 SetSecondState:
     LW      s1, OFSSW(gp)
     ANDI    s1, s1, 0x00FF
-    ADD     a0, s1, s2
+    ANDI    t0, s1, 0x000F
+    ADDI    t1, s0, 0x0009
+    BLTE    t0, t1, SSSDontMakeZero1
+    ANDI    s1, s1, 0x00F0
+    ORI     s1, s1, 0x0009
+SSSDontMakeZero1:
+    ANDI    t0, s1, 0x00F0
+    ADDI    t1, s0, 0x0050
+    BLTE    t0, t1, SSSDontMakeZero2
+    ANDI    s1, s1, 0x000F
+    ORI     s1, s1, 0x0050
+SSSDontMakeZero2:    
+    ANDI    a0, a0, 0xFF00
+    OR      a0, a0, s1
     SW      a0, OFSHEX(gp)
 
     LW      t0, OFSKEYCTL(gp)
@@ -109,10 +126,24 @@ SetMinuteState:
     ADD     s2, s2, s2      ; x64
     ADD     s2, s2, s2      ; x128
     ADD     s2, s2, s2      ; x256
-    ANDI    s2, s2, 0xFF00
-    ADD     a0, s1, s2
-    SW      a0, OFSHEX(gp)
 
+    ANDI    s2, s2, 0xFF00
+    ANDI    t0, s2, 0x0F00
+    ADDI    t1, s0, 0x0900
+    BLTE    t0, t1, SMSDontMakeZero1
+    ANDI    s2, s2, 0xF000
+    ORI     s2, s2, 0x0900
+SMSDontMakeZero1:
+    ANDI    t0, s2, 0xF000
+    ADDI    t1, s0, 0x5000
+    BLTE    t0, t1, SMSDontMakeZero2
+    ANDI    s2, s2, 0x0F00
+    ORI     s2, s2, 0x5000
+SMSDontMakeZero2:    
+    ANDI    a0, a0, 0x00FF
+    OR      a0, a0, s2
+    SW      a0, OFSHEX(gp)
+    
     LW      t0, OFSKEYCTL(gp)
     ANDI    t0, t0, READYMASK
     BEQZ    t0, SetMinuteState
@@ -151,6 +182,30 @@ RunningStateSkipKeyChecks:
     BEQZ    t0, RunningStateLoop
     LW      t0, OFSTIMERCNT(gp)     ; set timer ready bit to zero
     ADDI    s2, s2, 1
+
+    
+    ANDI    t0, s2, 0x000F
+    ADDI    t1, s0, 0x0009
+    BLTE    t0, t1, RSSkipAddRound1
+    ANDI    s2, s2, 0xFFF0
+    ADDI    s2, s2, 0x0010
+RSSkipAddRound1:
+
+    ANDI    t0, s2, 0x00F0
+    ADDI    t1, s0, 0x0050
+    BLTE    t0, t1, RSSkipAddRound2
+    ANDI    s2, s2, 0xFF0F
+    ADDI    s2, s2, 0x0100
+RSSkipAddRound2:
+
+    ANDI    t0, s2, 0x0F00
+    ADDI    t1, s0, 0x0900
+    BLTE    t0, t1, RSSkipAddRound3
+    ANDI    s2, s2, 0xF0FF
+    ADDI    s2, s2, 0x1000
+RSSkipAddRound3:
+
+
     BR      RunningStateLoop
     
 StoppedStateInit:
@@ -159,6 +214,31 @@ StoppedStateInit:
     LW      s1, OFSTIMERCNT(gp)     ; set timer ready bit to zero
     BEQZ    t0, StoppedState
     ADDI    s2, s2, 1
+
+
+ANDI    t0, s2, 0x000F
+    ADDI    t1, s0, 0x0009
+    BLTE    t0, t1, SSSkipAddRound1
+    ANDI    s2, s2, 0xFFF0
+    ADDI    s2, s2, 0x0010
+SSSkipAddRound1:
+
+    ANDI    t0, s2, 0x00F0
+    ADDI    t1, s0, 0x0050
+    BLTE    t0, t1, SSSkipAddRound2
+    ANDI    s2, s2, 0xFF0F
+    ADDI    s2, s2, 0x0100
+SSSkipAddRound2:
+
+    ANDI    t0, s2, 0x0F00
+    ADDI    t1, s0, 0x0900
+    BLTE    t0, t1, SSSkipAddRound3
+    ANDI    s2, s2, 0xF0FF
+    ADDI    s2, s2, 0x1000
+SSSkipAddRound3:
+
+
+    
 StoppedState:
     LW      t0, OFSKEYCTL(gp)
     ANDI    t0, t0, READYMASK

@@ -1,4 +1,4 @@
-create_clock -name "Clock10" -period 20.000ns [get_ports {CLOCK_50}]
+create_clock -name "Clock10" -period 100.000ns [get_ports {CLOCK_50}]
 
 derive_pll_clocks -create_base_clocks
 

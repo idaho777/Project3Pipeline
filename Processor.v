@@ -18,8 +18,8 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
     parameter DMEM_ADDR_BITS_LO                     = 2;
 
     
-    parameter IMEM_INIT_FILE				 = "Stopwatch.mif";
-//  parameter IMEM_INIT_FILE				 = "Test2.mif";
+//    parameter IMEM_INIT_FILE				 = "Stopwatch.mif";
+  parameter IMEM_INIT_FILE				 = "Test2.mif";
 //	parameter IMEM_INIT_FILE				 = "Sort2.mif";
 //	parameter IMEM_INIT_FILE				 = "Sorter2_asm.mif";
 
@@ -36,15 +36,16 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
  
     PLL PLL_inst (.inclk0 (CLOCK_50),.c0 (clk),.locked (lock));
     wire reset = ~lock;
-    parameter CLOCK_LENGTH = 40;
+//    parameter CLOCK_LENGTH = 25000000;
+    parameter CLOCK_LENGTH = 65000000;
 
     //ClkDivider #(.divider(2500000)) clkdi(CLOCK_50, clk);
     //wire reset = SW[0];
-	//parameter CLOCK_LENGTH = 40;
+	//parameter CLOCK_LENGTH = 25000000;
 
 //    assign clk = CLOCK_50;
 //    wire reset = SW[0];
-//    parameter CLOCK_LENGTH = 20;
+//    parameter CLOCK_LENGTH = 50000000;
     
     wire we;
     wire re;
@@ -91,7 +92,7 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
         .dataBusOut(dataBusOut4), .HEX0(HEX0), .HEX1(HEX1), .HEX2(HEX2), .HEX3(HEX3)
     );
 	
-	Switch #(.SW_WIDTH(10), .BITS(DBITS), .BASE(ADDR_SW), .CTRL_BASE(ADDR_SW_CONTROL), .DEBOUNCE_TIME(10000000/CLOCK_LENGTH)) sw(
+	Switch #(.SW_WIDTH(10), .BITS(DBITS), .BASE(ADDR_SW), .CTRL_BASE(ADDR_SW_CONTROL), .DEBOUNCE_TIME(CLOCK_LENGTH/100)) sw(
 		.clk(clk), .reset(reset), .we(we), .re(re), .memAddr(memAddr), .dataBusIn(dataBus), .sw(SW),
 		.dataBusOut(dataBusOut5)
 	);
@@ -101,7 +102,7 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 		.dataBusOut(dataBusOut6)
 	);
     
-	Timer #(.BITS(DBITS), .BASE(ADDR_TIMER_COUNT), .TLIM_BASE(ADDR_TIMER_LIMIT), .CTRL_BASE(ADDR_TIMER_CONTROL), .TIME_LENGTH(1000000/CLOCK_LENGTH)) timer(
+	Timer #(.BITS(DBITS), .BASE(ADDR_TIMER_COUNT), .TLIM_BASE(ADDR_TIMER_LIMIT), .CTRL_BASE(ADDR_TIMER_CONTROL), .TIME_LENGTH(CLOCK_LENGTH/1000)) timer(
 		.clk(clk), .reset(reset), .we(we), .re(re), .memAddr(memAddr), .dataBusIn(dataBus),
 		.dataBusOut(dataBusOut7)
 	);

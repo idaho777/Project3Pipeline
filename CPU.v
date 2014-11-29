@@ -1,6 +1,6 @@
 module CPU(
     clk, reset, dataBusIn, weBus, reBus, memAddrBus, dataBusOut,
-    inta, idn
+    inta, idn, debug
 );
 	parameter DBITS         				 = 32;
 	parameter INST_SIZE      				 = 32'd4;
@@ -32,6 +32,7 @@ module CPU(
     output weBus, reBus;
     output [DBITS - 1: 0] memAddrBus;
     output [DBITS - 1: 0] dataBusOut;
+    output [DBITS - 1: 0] debug;
     
 	wire [DBITS - 1: 0] aluIn2;
 	wire immSel;
@@ -100,17 +101,21 @@ module CPU(
         .sysRegWrtEn(sysRegWrtEn), .isReti(isReti), .isRSR(isRSR), .isWSR(isWSR)
     );
 
+    wire [DBITS - 1: 0] debugSysOut;
+    assign debug = {pcOut[31: 2], debugSysOut[0], intaSig};
+    
     SystemRegisterFile #(.DBITS(DBITS)) sysRegFile(
         .clk(clk), .reset(reset), .sysWrtEn(pipeIsWSR), .wrtIndex(pipeWrtIndex), .rdIndex(rdIndex1),
         .dataIn(pipeDataOut1), .pcIn(pcOut), .inta(inta), .isReti(isReti), .idn(idn),
         .intaSig(intaSig), .dataOut(sysDataOut), .intaAddr(intaAddr)
+        , .debugSysOut(debugSysOut)
     );
     
 	Mux4to1 muxRegIn (pipeMemOutSel, pipeAluOut, dataBusIn, pipePcLogicOut, pipeSysDataOut, dataIn);
 
 	// RegisterFile
 	RegisterFile #(.OP1_LW(OP1_LW)) regFile (
-        .clk(clk), .wrtEn(pipeRegFileEn), .isRSR(pipeIsRSR),
+        .clk(clk), .wrtEn(pipeRegFileEn),
         .fstOpcode(pipeFstOpcode),
         .wrtIndex(pipeWrtIndex), .rdIndex1(rdIndex1), .rdIndex2(rdIndex2),
         .dataIn(dataIn),

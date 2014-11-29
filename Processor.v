@@ -34,14 +34,15 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
     //PLL, clock generation, and reset generation
 	wire clk, lock;
  
-    PLL PLL_inst (.inclk0 (CLOCK_50),.c0 (clk),.locked (lock));
-    wire reset = ~lock;
-    parameter CLOCK_LENGTH = 25000000;
+//    PLL PLL_inst (.inclk0 (CLOCK_50),.c0 (clk),.locked (lock));
+//    wire reset = ~lock;
+//    parameter CLOCK_LENGTH = 25000000;
 //    parameter CLOCK_LENGTH = 65000000;
 
-    //ClkDivider #(.divider(2500000)) clkdi(CLOCK_50, clk);
-    //wire reset = SW[0];
-	//parameter CLOCK_LENGTH = 25000000;
+    ClkDivider #(.divider(2500000)) clkdi(CLOCK_50, clk);
+    wire reset = SW[0];
+	parameter CLOCK_LENGTH = 1000;
+//	parameter CLOCK_LENGTH = 25000000;
 
 //    assign clk = CLOCK_50;
 //    wire reset = SW[0];
@@ -66,16 +67,18 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
     wire [DBITS - 1: 0] dataBusOut7;
     
     
-    assign inta = !reset & (inta_timer | inta_switch || inta_key);
+    assign inta = (!reset) && (inta_timer || inta_switch || inta_key);
     assign idn = 
                 inta_timer  ? 1 : 
                 inta_key    ? 2 :
                 inta_switch ? 3 :
                 {(DBITS){1'b1}};
     
+    wire [DBITS - 1: 0] debugCPU, debugTimer;
+    
     CPU #(.IMEM_INIT_FILE(IMEM_INIT_FILE)) cpu(
         .clk(clk), .reset(reset), .dataBusIn(dataBus), .inta(inta), .idn(idn),
-        .weBus(we), .reBus(re), .memAddrBus(memAddr), .dataBusOut(dataBusOut0)
+        .weBus(we), .reBus(re), .memAddrBus(memAddr), .dataBusOut(dataBusOut0), .debug(debugCPU)
     );
 
     Memory #(
@@ -89,10 +92,13 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
         .dataBusOut(dataBusOut1)
     );
     
-    Led #(.LED_WIDTH(10), .BITS(DBITS), .BASE(ADDR_LEDR)) ledr(
-        .clk(clk), .reset(reset), .we(we), .memAddr(memAddr), .dataBusIn(dataBus),
-        .dataBusOut(dataBusOut2), .led(LEDR)
-    );
+    assign dataBusOut2 = 0;
+    assign LEDR = {debugCPU[7: 0], debugTimer[8], debugTimer[0]};
+    
+//    Led #(.LED_WIDTH(10), .BITS(DBITS), .BASE(ADDR_LEDR)) ledr(
+//        .clk(clk), .reset(reset), .we(we), .memAddr(memAddr), .dataBusIn(dataBus),
+//        .dataBusOut(dataBusOut2), .led(LEDR)
+//    );
 
     Led #(.LED_WIDTH(8), .BITS(DBITS), .BASE(ADDR_LEDG)) ledg(
         .clk(clk), .reset(reset), .we(we), .memAddr(memAddr), .dataBusIn(dataBus),
@@ -100,7 +106,8 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
     );
 
     Hex #(.HEX_WIDTH(16), .BITS(DBITS), .BASE(ADDR_HEX)) hex(
-        .clk(clk), .reset(reset), .we(we), .memAddr(memAddr), .dataBusIn(dataBus),
+//        .clk(clk), .reset(reset), .we(we), .memAddr(memAddr), .dataBusIn(dataBus),
+        .clk(clk), .reset(reset), .we(1'b1), .memAddr(ADDR_HEX), .dataBusIn(debugCPU),
         .dataBusOut(dataBusOut4), .HEX0(HEX0), .HEX1(HEX1), .HEX2(HEX2), .HEX3(HEX3)
     );
 	
@@ -116,7 +123,7 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
     
 	Timer #(.BITS(DBITS), .BASE(ADDR_TIMER_COUNT), .TLIM_BASE(ADDR_TIMER_LIMIT), .CTRL_BASE(ADDR_TIMER_CONTROL), .TIME_LENGTH(CLOCK_LENGTH/1000)) timer(
 		.clk(clk), .reset(reset), .we(we), .re(re), .memAddr(memAddr), .dataBusIn(dataBus),
-		.dataBusOut(dataBusOut7), .inta_ready(inta_timer)
+		.dataBusOut(dataBusOut7), .inta_ready(inta_timer), .debug(debugTimer)
 	);
 
     assign dataBus = dataBusOut0    //cpu

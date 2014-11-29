@@ -48,13 +48,19 @@ module PipelineRegister
     reg [0 : 0]  outBrTaken;
 
 
+    wire dataHazard;
+    assign dataHazard = outWrtIndex == inRdIndex1 || outWrtIndex == inRdIndex2;
+    
 //    assign isStall = 1'b0;
     assign isStall = 
-        (!prevStall) && 
-        (   
-            outRegWrEn
-            && (outInstType == OP1_LW)
-            && (outWrtIndex == inRdIndex1 | outWrtIndex == inRdIndex2)
+        (!prevStall) && ( 
+            (   
+                outRegWrEn
+                && (outInstType == OP1_LW)
+                && dataHazard
+            ) || (
+                outIsRSR && dataHazard
+            )
         );
 
     wire isFlush;
@@ -95,8 +101,8 @@ module PipelineRegister
             outIsLoad   <= (isFlush | isStall) ? 1'b0 : inIsLoad;
             outIsStore  <= (isFlush | isStall) ? 1'b0 : inIsStore;
             prevStall   <= isStall;
-            outIsWSR    <= inIsWSR;
-            outIsRSR    <= inIsRSR;
+            outIsWSR    <= (isFlush | isStall) ? 1'b0 : inIsWSR;
+            outIsRSR    <= (isFlush | isStall) ? 1'b0 : inIsRSR;
         end
     end
 

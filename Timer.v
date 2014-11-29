@@ -1,4 +1,4 @@
-module Timer(clk, reset, we, re, memAddr, dataBusIn, dataBusOut, inta_ready);
+module Timer(clk, reset, we, re, memAddr, dataBusIn, dataBusOut, inta_ready, debug);
 	parameter BITS;
 	parameter BASE;
 	parameter TLIM_BASE;
@@ -11,6 +11,7 @@ module Timer(clk, reset, we, re, memAddr, dataBusIn, dataBusOut, inta_ready);
     input [BITS - 1: 0] dataBusIn;
     output [BITS - 1: 0] dataBusOut;
     output inta_ready;
+    output [BITS - 1: 0] debug;
     
 	reg[BITS - 1: 0] timeCount = 0;
 	reg[BITS - 1: 0] counter = 0;
@@ -36,9 +37,9 @@ module Timer(clk, reset, we, re, memAddr, dataBusIn, dataBusOut, inta_ready);
 		end
 		else begin
 			counter <= counter + 1;
-			if (counter == TIME_LENGTH - 1) begin
+			if (counter >= TIME_LENGTH - 1) begin
 				counter <= 0;
-				timeCount <= (timeCount == timeLimitOut - 1) ? 0
+				timeCount <= (timeCount >= timeLimitOut - 1) ? 0
 						    : timeCount + 1;
 			end
 		end
@@ -88,5 +89,6 @@ module Timer(clk, reset, we, re, memAddr, dataBusIn, dataBusOut, inta_ready);
 					  : {BITS{1'b0}};
 
     assign inta_ready = ieBit & readyBit;
+    assign debug = ctrlOut;
 endmodule
 

@@ -42,7 +42,7 @@
 
 .NAME   READYMASK   = 0x00000001
 .NAME   OVERUNMASK  = 0x00000004
-.NAME   INTAMASK    = 0x00000008
+.NAME   INTAMASK    = 0x00000100
 .NAME   SECOND      = 0x000003E8
 .NAME   HSECOND     = 0x000001F4
 
@@ -68,7 +68,7 @@
 	ANDI	S0,S0,0
 	SW		S0,OFSLEDR(GP)	; Turn off LEDR
 	SW		S0,OFSLEDG(GP)	; Turn off LEDG
-
+    
 INTA_INIT:
     MVHI	SSP,SStkTop
 	ADDI	SSP,SSP,SStkTop
@@ -79,13 +79,14 @@ INTA_INIT:
     SW      s0, S_STATE(s0)
     SW      s0, S_COUNT(s0)
     ADDI    s1, s0, INTAMASK            ; enable device interrupts
-    SW      s1, OFSTIMERCTL(s0)
+    SW      s1, OFSTIMERCTL(gp)
     F       s0, s0, s0                  ; set up timer
     ADDI    s0, s0, SECOND
     SW      s0, OFSTIMERLMT(gp)
     
-    RSR     s0, PCS         ; enable interrupts
-    ORI     s0, s0, IEMASK
+    F       s0, s0, s0                  ; enable interrupts
+    NOT     s0, s0
+    ANDI    s0, s0, IEMASK
     WSR     PCS, s0
     F       s0, s0, s0
     
@@ -102,7 +103,7 @@ Init:
 	CALL	ChkAsc(S0)		; Call ChkAsc
 	
 	ADDI	S1,S0,ItNum		; We will keep the iteration count in S1
-;	SW		S1,OFSHEX(GP)	; Display loop counter
+	SW		S1,OFSLEDR(GP)	; Display loop counter
 MainLoop:
 	ADDI	A0,S0,Array
 	ADDI	A1,A0,ArrayBytes
@@ -114,7 +115,7 @@ MainLoop:
 	CALL 	ChkAsc(S0)		; ChkAsc()
 	; Decrement iteration counter and loop back if not done
 	ADDI	S1,S1,-1
-;	SW		S1,OFSHEX(GP)	; Display loop counter
+	SW		S1,OFSLEDR(GP)	; Display loop counter
 	BNEZ	S1,MainLoop
 
 DoneInit:    
@@ -122,6 +123,7 @@ DoneInit:
     ADDI    s0, s0, HSECOND
     SW      s0, OFSTIMERLMT(gp)
     F       s0, s0, s0
+    SW      s0, OFSTIMERCNT(gp)
     NOT		T0,S0			; All-ones in T0
     SW      t0, S_STATE(s0)
 	SW		T0,OFSLEDG(GP)	; Turn on LEDG
@@ -234,7 +236,7 @@ InterruptHandler:
     ADDI    SSP, SSP, -4
     SW      t1, 0(SSP)
     ADDI    SSP, SSP, -4
-    
+        
     RSR     s0, IDN
     ANDI    s1, s1, 0
     ADDI    s1, s1, IDN_TIMER

@@ -1,4 +1,4 @@
-module Key(clk, reset, we, re, memAddr, dataBusIn, key, dataBusOut);
+module Key(clk, reset, we, re, memAddr, dataBusIn, key, dataBusOut, inta_ready);
 	parameter KEY_WIDTH;
 	parameter BITS;
 	parameter BASE;
@@ -10,6 +10,7 @@ module Key(clk, reset, we, re, memAddr, dataBusIn, key, dataBusOut);
     input [BITS - 1: 0] dataBusIn;
 	input [KEY_WIDTH - 1: 0] key;
     output [BITS - 1: 0] dataBusOut;
+    output inta_ready;
     
 	wire deviceEnable;
     wire shouldReadData;
@@ -50,5 +51,6 @@ module Key(clk, reset, we, re, memAddr, dataBusIn, key, dataBusOut);
     assign dataBusOut = shouldWriteData ? {{(BITS - KEY_WIDTH){1'b0}}, keyOut} 
 					  :	(shouldWriteControl) ? ctrlOut
 					  : {BITS{1'b0}};
-					  
+
+    assign inta_ready = ieBit & readyBit;
 endmodule

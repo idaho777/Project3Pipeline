@@ -261,7 +261,7 @@ FlashingStateMain:
     SW      s0, OFSTIMERCNT(gp)
     NOT     s1, s1
 FlashingStateLoop:
-    SW      s1, OFSLEDG(gp)
+    SW      s1, OFSLEDR(gp)
 FlashingStateResetCheck:
     LW      t0, OFSKEYCTL(gp)
     ANDI    t0, t0, READYMASK

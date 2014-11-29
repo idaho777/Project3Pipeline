@@ -1,4 +1,4 @@
-module Switch(clk, reset, we, re, memAddr, dataBusIn, sw, dataBusOut);
+module Switch(clk, reset, we, re, memAddr, dataBusIn, sw, dataBusOut, inta_ready);
 	parameter SW_WIDTH;
 	parameter BITS;
 	parameter BASE;
@@ -11,6 +11,7 @@ module Switch(clk, reset, we, re, memAddr, dataBusIn, sw, dataBusOut);
     input [BITS - 1: 0] dataBusIn;
 	input [SW_WIDTH - 1: 0] sw;
     output [BITS - 1: 0] dataBusOut;
+    output inta_ready;
     
 	wire deviceEnable;
     wire shouldReadData;
@@ -67,5 +68,6 @@ module Switch(clk, reset, we, re, memAddr, dataBusIn, sw, dataBusOut);
     assign dataBusOut = shouldWriteData ? {{(BITS - SW_WIDTH){1'b0}}, swOut}
 					  :	(shouldWriteControl) ? ctrlOut
 					  : {BITS{1'b0}};
-					  
+
+    assign inta_ready = ieBit & readyBit;
 endmodule

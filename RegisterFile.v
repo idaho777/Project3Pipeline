@@ -1,7 +1,7 @@
 module RegisterFile (
     clk, wrtEn, 
     fstOpcode, wrtIndex, rdIndex1, rdIndex2, dataIn,
-    dataOut1, dataOut2
+    dataOut1, dataOut2, isRSR
 );
 	parameter INDEX_BIT_WIDTH = 4;
 	parameter DATA_BIT_WIDTH = 32;
@@ -13,6 +13,7 @@ module RegisterFile (
 	input [3: 0] wrtIndex, rdIndex1, rdIndex2;
     input [3: 0] fstOpcode;
 	input [31: 0] dataIn;
+    input isRSR;
 	output [31: 0] dataOut1, dataOut2;
 	
 	reg[DATA_BIT_WIDTH - 1: 0] data [0: N_REGS];
@@ -23,11 +24,8 @@ module RegisterFile (
     end
 
     wire shouldForwardData1, shouldForwardData2;
-    // if the stage 2 opcode is LW, then wrtEn is guaranteed to be false, meaning do not care if forward or not
-    assign shouldForwardData1 = wrtEn & wrtIndex == rdIndex1;
-    assign shouldForwardData2 = wrtEn & wrtIndex == rdIndex2;
-//    assign shouldForwardData1 = wrtEn & fstOpcode != OP1_LW & wrtIndex == rdIndex1;
-//    assign shouldForwardData2 = wrtEn & fstOpcode != OP1_LW & wrtIndex == rdIndex2;
+    assign shouldForwardData1 = wrtEn & wrtIndex == rdIndex1 & !isRSR;
+    assign shouldForwardData2 = wrtEn & wrtIndex == rdIndex2 & !isRSR;
 //    assign shouldForwardData1 = 1'b0;
 //    assign shouldForwardData2 = 1'b0;
 			

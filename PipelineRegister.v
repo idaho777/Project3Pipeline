@@ -4,7 +4,8 @@ module PipelineRegister
     inRdIndex1, inRdIndex2,
     inWrtIndex, inRegWrEn, inMulSel, inAluOut, inData2Out, inPC, inInstType, inBrTaken, inIsLoad, inIsStore,
     outWrtIndex, outRegWrEn, outMulSel, outAluOut, outData2Out, outPC, outInstType, outIsLoad, outIsStore,
-    isStall
+    isStall, inData1Out, outData1Out, inSysDataOut, outSysDataOut,
+    inIsWSR, inIsRSR, outIsRSR, outIsWSR
 );
     parameter RESET_VALUE = 0;
     parameter OP1_LW;
@@ -21,23 +22,26 @@ module PipelineRegister
 
     input [1 : 0]   inMulSel;
     input [31 : 0]  inAluOut;
-    input [31 : 0]  inData2Out;
+    input [31 : 0]  inSysDataOut;
+    input [31 : 0]  inData1Out, inData2Out;
     input [31 : 0]  inPC;
     input [3 : 0]   inInstType;
     input [0 : 0]   inBrTaken;
     input [0 : 0]   inIsLoad;
     input [0 : 0]   inIsStore;
-
+    input inIsWSR, inIsRSR;
 
     output reg [3 : 0]  outWrtIndex;
     output reg [0 : 0]  outRegWrEn;
     output reg [1 : 0]  outMulSel;
     output reg [31 : 0] outAluOut;
-    output reg [31 : 0] outData2Out;
+    output reg [31 : 0] outSysDataOut;
+    output reg [31 : 0] outData1Out, outData2Out;
     output reg [31 : 0] outPC;
     output reg [3 : 0]  outInstType;
     output reg [0 : 0]  outIsLoad;
     output reg [0 : 0]  outIsStore;
+    output reg outIsWSR, outIsRSR;
     output [0 : 0]  isStall;
 
     reg [0 : 0]  prevStall;
@@ -65,6 +69,8 @@ module PipelineRegister
             outRegWrEn  <= 1'b0;
             outMulSel   <= 2'b0;
             outAluOut   <= 32'b0;
+            outSysDataOut <= 32'b0;
+            outData1Out <= 32'b0;
             outData2Out <= 32'b0;
             outPC       <= 32'b0;
             outInstType <= 4'b0;
@@ -72,12 +78,16 @@ module PipelineRegister
             outIsLoad   <= 1'b0;
             outIsStore  <= 1'b0;
             prevStall   <= 1'b0;
+            outIsWSR    <= 1'b0;
+            outIsRSR    <= 1'b0;
         end
         else begin
             outWrtIndex <= inWrtIndex;
             outRegWrEn  <= (isFlush | isStall) ? 1'b0 : inRegWrEn;
             outMulSel   <= inMulSel;
             outAluOut   <= inAluOut;
+            outSysDataOut <= inSysDataOut;
+            outData1Out <= inData1Out;
             outData2Out <= inData2Out;
             outPC       <= inPC;
             outInstType <= inInstType;
@@ -85,6 +95,8 @@ module PipelineRegister
             outIsLoad   <= (isFlush | isStall) ? 1'b0 : inIsLoad;
             outIsStore  <= (isFlush | isStall) ? 1'b0 : inIsStore;
             prevStall   <= isStall;
+            outIsWSR    <= inIsWSR;
+            outIsRSR    <= inIsRSR;
         end
     end
 

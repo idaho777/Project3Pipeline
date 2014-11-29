@@ -17,11 +17,11 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
     parameter DMEM_ADDR_BITS_HI                     = DMEM_ADDR_BIT_WIDTH + 2;
     parameter DMEM_ADDR_BITS_LO                     = 2;
 
-    
+    parameter IMEM_INIT_FILE               = "Combined.mif";
 //    parameter IMEM_INIT_FILE				 = "Stopwatch.mif";
-  parameter IMEM_INIT_FILE				 = "Test2.mif";
-//	parameter IMEM_INIT_FILE				 = "Sort2.mif";
-//	parameter IMEM_INIT_FILE				 = "Sorter2_asm.mif";
+//    parameter IMEM_INIT_FILE				 = "Test2.mif";
+//	  parameter IMEM_INIT_FILE				 = "Sort2.mif";
+//	  parameter IMEM_INIT_FILE				 = "Sorter2_asm.mif";
 
     
     input  [9:0] SW;
@@ -36,8 +36,8 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
  
     PLL PLL_inst (.inclk0 (CLOCK_50),.c0 (clk),.locked (lock));
     wire reset = ~lock;
-//    parameter CLOCK_LENGTH = 25000000;
-    parameter CLOCK_LENGTH = 65000000;
+    parameter CLOCK_LENGTH = 25000000;
+//    parameter CLOCK_LENGTH = 65000000;
 
     //ClkDivider #(.divider(2500000)) clkdi(CLOCK_50, clk);
     //wire reset = SW[0];
@@ -51,6 +51,10 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
     wire re;
     wire [DBITS - 1: 0] memAddr;
     wire [DBITS - 1: 0] dataBus;
+    wire inta_timer, inta_switch, inta_key;
+    wire inta;
+    wire [DBITS - 1: 0]idn;
+    
     
     wire [DBITS - 1: 0] dataBusOut0;
     wire [DBITS - 1: 0] dataBusOut1;
@@ -61,8 +65,16 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
     wire [DBITS - 1: 0] dataBusOut6;
     wire [DBITS - 1: 0] dataBusOut7;
     
+    
+    assign inta = !reset & (inta_timer | inta_switch || inta_key);
+    assign idn = 
+                inta_timer  ? 1 : 
+                inta_key    ? 2 :
+                inta_switch ? 3 :
+                {(DBITS){1'b1}};
+    
     CPU #(.IMEM_INIT_FILE(IMEM_INIT_FILE)) cpu(
-        .clk(clk), .reset(reset), .dataBusIn(dataBus),
+        .clk(clk), .reset(reset), .dataBusIn(dataBus), .inta(inta), .idn(idn),
         .weBus(we), .reBus(re), .memAddrBus(memAddr), .dataBusOut(dataBusOut0)
     );
 
@@ -94,17 +106,17 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
 	
 	Switch #(.SW_WIDTH(10), .BITS(DBITS), .BASE(ADDR_SW), .CTRL_BASE(ADDR_SW_CONTROL), .DEBOUNCE_TIME(CLOCK_LENGTH/100)) sw(
 		.clk(clk), .reset(reset), .we(we), .re(re), .memAddr(memAddr), .dataBusIn(dataBus), .sw(SW),
-		.dataBusOut(dataBusOut5)
+		.dataBusOut(dataBusOut5), .inta_ready(inta_switch)
 	);
 	
 	Key #(.KEY_WIDTH(4), .BITS(DBITS), .BASE(ADDR_KEY), .CTRL_BASE(ADDR_KEY_CONTROL)) key(
 		.clk(clk), .reset(reset), .we(we), .re(re), .memAddr(memAddr), .dataBusIn(dataBus), .key(KEY),
-		.dataBusOut(dataBusOut6)
+		.dataBusOut(dataBusOut6), .inta_ready(inta_key)
 	);
     
 	Timer #(.BITS(DBITS), .BASE(ADDR_TIMER_COUNT), .TLIM_BASE(ADDR_TIMER_LIMIT), .CTRL_BASE(ADDR_TIMER_CONTROL), .TIME_LENGTH(CLOCK_LENGTH/1000)) timer(
 		.clk(clk), .reset(reset), .we(we), .re(re), .memAddr(memAddr), .dataBusIn(dataBus),
-		.dataBusOut(dataBusOut7)
+		.dataBusOut(dataBusOut7), .inta_ready(inta_timer)
 	);
 
     assign dataBus = dataBusOut0    //cpu

@@ -124,6 +124,7 @@ DoneInit:
     SW      s0, OFSTIMERLMT(gp)
     F       s0, s0, s0
     SW      s0, OFSTIMERCNT(gp)
+    SW      s0, S_COUNT(s0)
     NOT		T0,S0			; All-ones in T0
     SW      t0, S_STATE(s0)
 	SW		T0,OFSLEDG(GP)	; Turn on LEDG

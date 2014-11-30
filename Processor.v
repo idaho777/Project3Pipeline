@@ -34,14 +34,14 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
     //PLL, clock generation, and reset generation
 	wire clk, lock;
  
-//    PLL PLL_inst (.inclk0 (CLOCK_50),.c0 (clk),.locked (lock));
-//    wire reset = ~lock;
-//    parameter CLOCK_LENGTH = 25000000;
+    PLL PLL_inst (.inclk0 (CLOCK_50),.c0 (clk),.locked (lock));
+    wire reset = ~lock;
+    parameter CLOCK_LENGTH = 25000000;
 //    parameter CLOCK_LENGTH = 65000000;
 
-    ClkDivider #(.divider(2500000)) clkdi(CLOCK_50, clk);
-    wire reset = SW[0];
-	parameter CLOCK_LENGTH = 1000;
+//    ClkDivider #(.divider(2500000)) clkdi(CLOCK_50, clk);
+//    wire reset = SW[0];
+//	parameter CLOCK_LENGTH = 1000;
 //	parameter CLOCK_LENGTH = 25000000;
 
 //    assign clk = CLOCK_50;
@@ -92,13 +92,13 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
         .dataBusOut(dataBusOut1)
     );
     
-    assign dataBusOut2 = 0;
-    assign LEDR = {debugCPU[7: 0], debugTimer[8], debugTimer[0]};
+//    assign dataBusOut2 = 0;
+//    assign LEDR = {debugCPU[7: 0], debugTimer[8], debugTimer[0]};
     
-//    Led #(.LED_WIDTH(10), .BITS(DBITS), .BASE(ADDR_LEDR)) ledr(
-//        .clk(clk), .reset(reset), .we(we), .memAddr(memAddr), .dataBusIn(dataBus),
-//        .dataBusOut(dataBusOut2), .led(LEDR)
-//    );
+    Led #(.LED_WIDTH(10), .BITS(DBITS), .BASE(ADDR_LEDR)) ledr(
+        .clk(clk), .reset(reset), .we(we), .memAddr(memAddr), .dataBusIn(dataBus),
+        .dataBusOut(dataBusOut2), .led(LEDR)
+    );
 
     Led #(.LED_WIDTH(8), .BITS(DBITS), .BASE(ADDR_LEDG)) ledg(
         .clk(clk), .reset(reset), .we(we), .memAddr(memAddr), .dataBusIn(dataBus),
@@ -106,8 +106,8 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
     );
 
     Hex #(.HEX_WIDTH(16), .BITS(DBITS), .BASE(ADDR_HEX)) hex(
-//        .clk(clk), .reset(reset), .we(we), .memAddr(memAddr), .dataBusIn(dataBus),
-        .clk(clk), .reset(reset), .we(1'b1), .memAddr(ADDR_HEX), .dataBusIn(debugCPU),
+        .clk(clk), .reset(reset), .we(we), .memAddr(memAddr), .dataBusIn(dataBus),
+//        .clk(clk), .reset(reset), .we(1'b1), .memAddr(ADDR_HEX), .dataBusIn(debugCPU),
         .dataBusOut(dataBusOut4), .HEX0(HEX0), .HEX1(HEX1), .HEX2(HEX2), .HEX3(HEX3)
     );
 	

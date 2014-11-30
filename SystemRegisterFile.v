@@ -48,6 +48,8 @@ module SystemRegisterFile(
     Register #(.BIT_WIDTH(DBITS), .RESET_VALUE(0)) idnReg (
         clk, reset, idnWrtEn, intaSig ? idn : dataIn, idnOut
     );
+    
+    
     Register #(.BIT_WIDTH(DBITS), .RESET_VALUE(0)) iraReg (
         clk, reset, iraWrtEn, intaSig ? pcIn : dataIn, iraOut
     );
@@ -62,6 +64,6 @@ module SystemRegisterFile(
             rdIndex == IDN_INDEX ? (idnWSR ? dataIn : idnOut) :
             0;
          
-    assign intaAddr = intaSig ? ihaOut << 2: iraOut;
+    assign intaAddr = intaSig ? ihaOut: iraOut;
 
 endmodule

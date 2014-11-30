@@ -17,7 +17,8 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
     parameter DMEM_ADDR_BITS_HI                     = DMEM_ADDR_BIT_WIDTH + 2;
     parameter DMEM_ADDR_BITS_LO                     = 2;
 
-    parameter IMEM_INIT_FILE               = "Combined.mif";
+//    parameter IMEM_INIT_FILE               = "Combined.mif";
+    parameter IMEM_INIT_FILE               = "Combined2.mif";
 //    parameter IMEM_INIT_FILE				 = "Stopwatch.mif";
 //    parameter IMEM_INIT_FILE				 = "Test2.mif";
 //	  parameter IMEM_INIT_FILE				 = "Sort2.mif";
@@ -93,7 +94,7 @@ module Processor(SW,KEY,LEDR,LEDG,HEX0,HEX1,HEX2,HEX3,CLOCK_50);
     );
     
 //    assign dataBusOut2 = 0;
-//    assign LEDR = {debugCPU[7: 0], debugTimer[8], debugTimer[0]};
+//    assign LEDR = {7'b0, inta_timer, inta_switch, inta_key};
     
     Led #(.LED_WIDTH(10), .BITS(DBITS), .BASE(ADDR_LEDR)) ledr(
         .clk(clk), .reset(reset), .we(we), .memAddr(memAddr), .dataBusIn(dataBus),

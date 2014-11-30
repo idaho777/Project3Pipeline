@@ -51,7 +51,7 @@ module CPU(
 	wire[IMEM_DATA_BIT_WIDTH - 1: 0] instWord;
 	wire[DBITS - 1: 0] branchPc;
 	wire isLoad, isStore;
-    wire sysRegWrtEn, isReti, isRSR, isWSR;
+    wire isReti, isRSR, isWSR;
     wire intaSig;
     wire [DBITS - 1:0] sysDataOut, intaAddr;
     
@@ -98,11 +98,11 @@ module CPU(
         .regFileWrtEn(regFileEn),
         .immSel(immSel), .memOutSel(memOutSel), .pcSel(pcSel),
         .isLoad(isLoad), .isStore(isStore),
-        .sysRegWrtEn(sysRegWrtEn), .isReti(isReti), .isRSR(isRSR), .isWSR(isWSR)
+        .isReti(isReti), .isRSR(isRSR), .isWSR(isWSR)
     );
 
     wire [DBITS - 1: 0] debugSysOut;
-    assign debug = {pcOut[31: 2], debugSysOut[0], intaSig};
+    assign debug = pcOut;
     
     SystemRegisterFile #(.DBITS(DBITS)) sysRegFile(
         .clk(clk), .reset(reset), .sysWrtEn(pipeIsWSR), .wrtIndex(pipeWrtIndex), .rdIndex(rdIndex1),

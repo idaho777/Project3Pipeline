@@ -2,7 +2,7 @@ module Controller (
     inst, aluCmpIn, intaSig,
     fstOpcode, sndOpcode, dRegAddr, s1RegAddr, s2RegAddr,
     imm, regFileWrtEn, immSel, memOutSel, pcSel, isLoad, isStore,
-    sysRegWrtEn, isReti, isRSR, isWSR
+    isReti, isRSR, isWSR
 );
 	
 	parameter INST_BIT_WIDTH = 32;
@@ -31,7 +31,7 @@ module Controller (
 	output reg isLoad, isStore;
 
     // inta signals
-    output reg sysRegWrtEn, isReti, isRSR, isWSR;
+    output reg isReti, isRSR, isWSR;
 	
 	always @(*)
 	begin
@@ -48,7 +48,6 @@ module Controller (
             pcSel 			<= 2'b11; // intaAddr
             isLoad 			<= 1'b0;
             isStore 			<= 1'b0;
-            sysRegWrtEn     <= 1'b0;
             isReti          <= 1'b0;
             isRSR           <= 1'b0;
             isWSR           <= 1'b0;
@@ -68,7 +67,6 @@ module Controller (
                     pcSel 			<= 2'b00; // pc + 4
                     isLoad 			<= 1'b0;
                     isStore 			<= 1'b0;
-                    sysRegWrtEn     <= 1'b0;
                     isReti          <= 1'b0;
                     isRSR           <= 1'b0;
                     isWSR           <= 1'b0;
@@ -87,7 +85,6 @@ module Controller (
                     pcSel 			<= 2'b00; // pc + 4
                     isLoad 			<= 1'b0;
                     isStore 			<= 1'b0;
-                    sysRegWrtEn     <= 1'b0;
                     isReti          <= 1'b0;
                     isRSR           <= 1'b0;
                     isWSR           <= 1'b0;
@@ -105,7 +102,6 @@ module Controller (
                     pcSel 			<= 2'b00; // pc + 4
                     isLoad 			<= 1'b0;
                     isStore 			<= 1'b0;
-                    sysRegWrtEn     <= 1'b0;
                     isReti          <= 1'b0;
                     isRSR           <= 1'b0;
                     isWSR           <= 1'b0;
@@ -124,7 +120,6 @@ module Controller (
                     pcSel 			<= 2'b00; // pc + 4
                     isLoad 			<= 1'b0;
                     isStore 			<= 1'b0;
-                    sysRegWrtEn     <= 1'b0;
                     isReti          <= 1'b0;
                     isRSR           <= 1'b0;
                     isWSR           <= 1'b0;
@@ -145,7 +140,6 @@ module Controller (
                         pcSel	  		<= 2'b00; // do not branch
                     isLoad 			<= 1'b0;
                     isStore 			<= 1'b0;
-                    sysRegWrtEn     <= 1'b0;
                     isReti          <= 1'b0;
                     isRSR           <= 1'b0;
                     isWSR           <= 1'b0;
@@ -163,7 +157,6 @@ module Controller (
                     pcSel 			<= 2'b00; // pc + 4
                     isLoad 			<= 1'b1;
                     isStore 			<= 1'b0;
-                    sysRegWrtEn     <= 1'b0;
                     isReti          <= 1'b0;
                     isRSR           <= 1'b0;
                     isWSR           <= 1'b0;
@@ -181,7 +174,6 @@ module Controller (
                     pcSel 			<= 2'b00; // pc + 4
                     isLoad 			<= 1'b0;
                     isStore 			<= 1'b1;
-                    sysRegWrtEn     <= 1'b0;
                     isReti          <= 1'b0;
                     isRSR           <= 1'b0;
                     isWSR           <= 1'b0;
@@ -199,7 +191,6 @@ module Controller (
                     pcSel 			<= 2'b10; // pc + 4
                     isLoad 			<= 1'b0;
                     isStore 			<= 1'b0;
-                    sysRegWrtEn     <= 1'b0;
                     isReti          <= 1'b0;
                     isRSR           <= 1'b0;
                     isWSR           <= 1'b0;
@@ -216,10 +207,9 @@ module Controller (
                     isStore         <= 1'b0;
                     case(inst[27:24])
                     4'b0001:begin // RETI
-                        pcSel           <= 2'b11; // intaAddr()
+                        pcSel           <= 2'b11; // intaAddr
                         regFileWrtEn    <= 1'b0;
                         memOutSel       <= 2'b00;
-                        sysRegWrtEn     <= 1'b1;
                         isReti          <= 1'b1;
                         isRSR           <= 1'b0;
                         isWSR           <= 1'b0;
@@ -228,7 +218,6 @@ module Controller (
                         pcSel           <= 2'b00; // pc + 4
                         regFileWrtEn    <= 1'b1;
                         memOutSel       <= 2'b11; // sysDataOut1
-                        sysRegWrtEn     <= 1'b0;
                         isReti          <= 1'b0;
                         isRSR           <= 1'b1;
                         isWSR           <= 1'b0;
@@ -237,7 +226,6 @@ module Controller (
                         pcSel           <= 2'b00; // pc + 4
                         regFileWrtEn    <= 1'b0;
                         memOutSel       <= 2'b00;
-                        sysRegWrtEn     <= 1'b1;
                         isReti          <= 1'b0;
                         isRSR           <= 1'b0;
                         isWSR           <= 1'b1;
@@ -246,7 +234,6 @@ module Controller (
                         pcSel           <= 2'b00; // pc + 4
                         regFileWrtEn    <= 1'b0;
                         memOutSel       <= 2'b00;
-                        sysRegWrtEn     <= 1'b0;
                         isReti          <= 1'b0;
                         isRSR           <= 1'b0;
                         isWSR           <= 1'b0;
@@ -266,7 +253,6 @@ module Controller (
                     pcSel 			<= 2'b00; // pc + 4
                     isLoad 			<= 1'b0;
                     isStore 			<= 1'b0;
-                    sysRegWrtEn     <= 1'b0;
                     isReti          <= 1'b0;
                     isRSR           <= 1'b0;
                     isWSR           <= 1'b0;

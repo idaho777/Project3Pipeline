@@ -52,5 +52,5 @@ module Key(clk, reset, we, re, memAddr, dataBusIn, key, dataBusOut, inta_ready);
 					  :	(shouldWriteControl) ? ctrlOut
 					  : {BITS{1'b0}};
 
-    assign inta_ready = ieBit & readyBit;
+    assign inta_ready = ctrlOut[8] & ctrlOut[0];
 endmodule

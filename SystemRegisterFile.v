@@ -27,28 +27,24 @@ module SystemRegisterFile(
     assign iraWSR = sysWrtEn && wrtIndex == IRA_INDEX;
     assign idnWSR = sysWrtEn && wrtIndex == IDN_INDEX;
     
-    wire pcsOldWrtEn, pcsWrtEn, idnWrtEn, iraWrtEn, ihaWrtEn;
-    assign pcsOldWrtEn = intaSig;
+    wire pcsWrtEn, idnWrtEn, iraWrtEn, ihaWrtEn;
     assign pcsWrtEn = pcsWSR || intaSig || isReti;
     assign idnWrtEn = idnWSR || intaSig;
     assign iraWrtEn = iraWSR || intaSig;
     assign ihaWrtEn = ihaWSR;
     
-    wire [DBITS - 1: 0] pcsOut, pcsOldOut, idnOut, iraOut, ihaOut;
-    Register #(.BIT_WIDTH(DBITS), .RESET_VALUE(0)) pcsOldReg (
-        clk, reset, pcsOldWrtEn, pcsOut, pcsOldOut
-    );
+    wire [DBITS - 1: 0] pcsOut, idnOut, iraOut, ihaOut;
     Register #(.BIT_WIDTH(DBITS), .RESET_VALUE(0)) pcsReg (
         clk, reset, pcsWrtEn, 
-            intaSig ? 0: 
-            isReti ? pcsOldOut : 
+            isReti ? {(DBITS){1'b1}} :
+            intaSig ? {(DBITS){1'b0}} : 
             dataIn,
         pcsOut
     );
+    
     Register #(.BIT_WIDTH(DBITS), .RESET_VALUE(0)) idnReg (
         clk, reset, idnWrtEn, intaSig ? idn : dataIn, idnOut
     );
-    
     
     Register #(.BIT_WIDTH(DBITS), .RESET_VALUE(0)) iraReg (
         clk, reset, iraWrtEn, intaSig ? pcIn : dataIn, iraOut

@@ -88,7 +88,7 @@ module Timer(clk, reset, we, re, memAddr, dataBusIn, dataBusOut, inta_ready, deb
 					  : shouldWriteControl ? ctrlOut
 					  : {BITS{1'b0}};
 
-    assign inta_ready = ieBit & readyBit;
+    assign inta_ready = ctrlOut[8] & ctrlOut[0];
     assign debug = ctrlOut;
 endmodule
 
